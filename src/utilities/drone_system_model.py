@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from functools import partial
 
-from .hover_env import HoverEnv
+from src.envs.hover_env import HoverEnv
 
 from direct_data_driven_mpc.utilities.models.nonlinear_model import (
     NonlinearSystem)
@@ -24,7 +24,7 @@ def drone_dynamics(
     env.step(action)
 
     # Get system state from environment
-    # We consider the state as the base position, omitting other variables
+    # We assume the state to be the base position, omitting other variables
     # since we only require input-output data for controlling the drone
     state = env.base_pos[env_idx].cpu().numpy()
 

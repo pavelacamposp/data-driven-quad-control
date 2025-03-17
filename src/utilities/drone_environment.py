@@ -2,7 +2,7 @@ from typing import Any
 
 import torch
 
-from .hover_env import HoverEnv
+from src.envs.hover_env import HoverEnv
 
 def get_cfgs():
     env_cfg = {
