@@ -83,7 +83,7 @@ def test_hover_env_utilities(
 
 
 def compare_dicts_str_tensor(
-    dict_1: dict[str, torch.Tensor], dict_2: dict[str, torch.Tensor]
+    dict_1: dict[str, Any], dict_2: dict[str, Any]
 ) -> bool:
     if dict_1.keys() != dict_2.keys():
         return False
@@ -91,8 +91,13 @@ def compare_dicts_str_tensor(
     for key in dict_1:
         value_1, value_2 = dict_1[key], dict_2[key]
 
+        # Recursive call if nested dict
+        if isinstance(value_1, dict) and isinstance(value_2, dict):
+            if not compare_dicts_str_tensor(value_1, value_2):
+                return False
+
         # Check if tensor values are equal
-        if isinstance(value_1, torch.Tensor) and isinstance(
+        elif isinstance(value_1, torch.Tensor) and isinstance(
             value_2, torch.Tensor
         ):
             if not torch.equal(value_1, value_2):

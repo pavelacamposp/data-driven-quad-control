@@ -6,6 +6,8 @@
 # License: Apache License 2.0 (See `LICENSE-APACHE` for details)
 #
 # Key modifications:
+#   - Implemented a Collective Thrust and Body Rates (CTBR) internal
+#     controller to support actions consisting of total thrust and body rates.
 #   - Implemented action decimation (number of simulation steps
 #     to take for each task step).
 #   - Implemented methods for saving and loading environment states.
@@ -26,7 +28,18 @@ from genesis.utils.geom import (
     transform_quat_by_quat,
 )
 
-from data_driven_quad_control.utilities.math_utils import gs_rand_float
+from data_driven_quad_control.controllers.ctbr.ctbr_controller import (
+    DroneCTBRController,
+)
+from data_driven_quad_control.envs.config.hover_env_config import (
+    EnvActionBounds,
+    EnvActionType,
+    EnvCTBRControllerConfig,
+)
+from data_driven_quad_control.utilities.math_utils import (
+    gs_rand_float,
+    linear_interpolate,
+)
 
 
 class HoverEnv:
@@ -42,6 +55,7 @@ class HoverEnv:
         show_viewer: bool = False,
         device: torch.device | str = "cuda",
         auto_target_updates: bool = True,
+        action_type: EnvActionType = EnvActionType.CTBR,
     ):
         self._is_closed = False  # Env closing status
 
@@ -54,7 +68,27 @@ class HoverEnv:
         self.num_envs = num_envs
         self.num_obs = obs_cfg["num_obs"]
         self.num_privileged_obs = None
+
+        self.action_type = action_type
         self.num_actions = env_cfg["num_actions"]
+
+        # Create CTBR controller if the action type is CTBR
+        if self.action_type == EnvActionType.CTBR:
+            # Load drone and controller parameters for CTBR controller init
+            drone_config = EnvCTBRControllerConfig.get_drone_config()
+            controller_config = EnvCTBRControllerConfig.get_controller_config()
+            self.ctbr_controller = DroneCTBRController(
+                drone_config=drone_config,
+                controller_config=controller_config,
+                num_envs=self.num_envs,
+                device=self.device,
+            )
+
+        # Initialize action bound tensors from configuration file
+        self.max_ang_vels = torch.tensor(
+            EnvActionBounds.MAX_ANG_VELS, dtype=torch.float, device=self.device
+        )
+
         self.num_commands = command_cfg["num_commands"]
 
         self.simulate_action_latency = env_cfg["simulate_action_latency"]
@@ -238,9 +272,45 @@ class HoverEnv:
 
         # perform physics stepping
         for _ in range(self.decimation):
-            self.drone.set_propellels_rpm(
-                (1 + exec_actions * 0.8) * self.BASE_RPM
-            )
+            if self.action_type == EnvActionType.CTBR:
+                # Calculate thrust and rate setpoints from actions
+                thrust_setpoints = linear_interpolate(
+                    x=exec_actions[:, 0],
+                    x_min=-1,
+                    x_max=1,
+                    y_min=0.0,
+                    y_max=EnvActionBounds.MAX_THRUST,
+                )
+                rates_setpoints = linear_interpolate(
+                    x=exec_actions[:, 1:],
+                    x_min=-1,
+                    x_max=1,
+                    y_min=-self.max_ang_vels,
+                    y_max=self.max_ang_vels,
+                )
+
+                # Compute rotor RPMs from CTBR controller
+                controller_rpms = self.ctbr_controller.compute(
+                    rate_measurements=self.base_ang_vel,
+                    rate_setpoints=rates_setpoints,
+                    thrust_setpoints=thrust_setpoints,
+                )
+
+                # Set drone propeller RPMs
+                self.drone.set_propellels_rpm(controller_rpms)
+            else:
+                # Calculate rotor RPMs from actions
+                rotor_RPMs = linear_interpolate(
+                    x=exec_actions,
+                    x_min=-1,
+                    x_max=1,
+                    y_min=EnvActionBounds.MIN_RPM,
+                    y_max=EnvActionBounds.MAX_RPM,
+                )
+
+                # Set drone propeller RPMs
+                self.drone.set_propellels_rpm(rotor_RPMs)
+
             self.scene.step()
 
         # update buffers
@@ -378,6 +448,10 @@ class HoverEnv:
             )
             self.episode_sums[key][envs_idx] = 0.0
 
+        # Reset CTBR controller state if the action type is CTBR
+        if self.action_type == EnvActionType.CTBR:
+            self.ctbr_controller.reset()
+
         self._resample_commands(envs_idx)
 
     def get_observations(self) -> torch.Tensor:
@@ -410,6 +484,10 @@ class HoverEnv:
             "last_actions": self.last_actions[envs_idx].clone(),
         }
 
+        # Add CTBR controller state if the action type is CTBR
+        if self.action_type == EnvActionType.CTBR:
+            state["ctbr_controller_state"] = self.ctbr_controller.get_state()
+
         return state
 
     def restore_from_state(
@@ -423,6 +501,9 @@ class HoverEnv:
         commands = saved_state["commands"]
         episode_length = saved_state["episode_length"]
         last_actions = saved_state["last_actions"]
+
+        if self.action_type == EnvActionType.CTBR:
+            ctbr_controller_state = saved_state["ctbr_controller_state"]
 
         # Reset base
         self.base_pos[envs_idx] = base_pos
@@ -461,6 +542,10 @@ class HoverEnv:
                 / self.env_cfg["episode_length_s"]
             )
             self.episode_sums[key][envs_idx] = 0.0
+
+        # Load CTBR controller state if the action type is CTBR
+        if self.action_type == EnvActionType.CTBR:
+            self.ctbr_controller.load_state(ctbr_controller_state)
 
     # ------------ reward functions----------------
     def _reward_target(self) -> torch.Tensor:
