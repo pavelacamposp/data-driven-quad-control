@@ -1,0 +1,30 @@
+---
+# Drone parameters of a Crazyflie 2.0 Nano Quadrocopter
+# Based on the URDF file `cf2x.urdf` from the Genesis repository.
+#
+# Repository: Genesis-Embodied-AI/Genesis
+# URL: https://github.com/Genesis-Embodied-AI/Genesis
+# License: Apache License 2.0 (See `LICENSE-APACHE` for details)
+
+# Drone physical parameters
+drone_params:
+  mass: 0.027  # [kg]
+  inertia:  # [kg*m^2]
+    Jxx: 1.4e-5
+    Jxy: 0.0
+    Jxz: 0.0
+    Jyy: 1.4e-5
+    Jyz: 0.0
+    Jzz: 2.17e-5
+
+# Drone rotor configurations
+drone_rotor_params:
+  kf: 3.16e-10  # Force coefficient [N / (rad/s)^2]
+  km: 7.94e-12  # Moment coefficient [N*m / (rad/s)^2]
+  arm_length: 0.0397  # [m]
+
+  # Rotor angle positions measured from the front [degrees]
+  rotor_angles_deg: [45.0, 135.0, 225.0, 315.0]
+
+  # Rotation direction per rotor (1 = Counterclockwise, -1 = Clockwise)
+  rotor_spin_directions: [-1, 1, -1, 1]
