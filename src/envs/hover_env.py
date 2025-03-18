@@ -20,16 +20,10 @@ import genesis as gs
 from genesis.utils.geom import (
     quat_to_xyz, transform_by_quat, inv_quat, transform_quat_by_quat)
 
+from src.utilities.math_utils import gs_rand_float
+
 from genesis.engine.entities.drone_entity import DroneEntity
 from genesis.engine.entities.rigid_entity import RigidEntity
-
-def gs_rand_float(
-    lower: float,
-    upper: float,
-    shape: Union[int, tuple[int, ...]],
-    device: torch.device
-) -> torch.Tensor:
-    return (upper - lower) * torch.rand(size=shape, device=device) + lower
 
 class HoverEnv:
     BASE_RPM = 14468.429183500699  # Propeller RPMs for hovering
