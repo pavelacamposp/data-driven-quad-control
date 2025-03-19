@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from enum import Enum
 from typing import Any
@@ -31,7 +33,6 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         "dt": 0.01,  # sim freq = 100 Hz
         "decimation": 4,  # ctrl freq = 1 / (0.01 * 4) = 25 Hz
         # actions
-        "num_actions": 4,
         "simulate_action_latency": True,
         "clip_actions": 1.0,
         # termination
@@ -54,7 +55,6 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         "max_visualize_FPS": 100,  # 1 / dt = 100 Hz
     }
     obs_cfg = {
-        "num_obs": 17,
         "obs_scales": {
             "rel_pos": 1 / 3.0,
             "lin_vel": 1 / 3.0,
@@ -102,6 +102,39 @@ class EnvActionType(Enum):
     #     - w_y: The pitch angular velocity [rad/s].
     #     - w_z: The yaw angular velocity [rad/s].
     CTBR = 1
+
+    # Collective Thrust and Body Rates (CTBR) with fixed yaw
+    # Action: [F_z, w_x, w_y]
+    #   where:
+    #     - F_z: The total thrust force [N] of the drone's propellers.
+    #     - w_x: The roll angular velocity [rad/s].
+    #     - w_y: The pitch angular velocity [rad/s].
+    # Note: The yaw angular velocity w_z is set to 0.
+    CTBR_FIXED_YAW = 2
+
+    @classmethod
+    def get_num_actions(cls, action_type: EnvActionType) -> int:
+        num_actions_mapping = {
+            cls.ROTOR_RPMS: 4,
+            cls.CTBR: 4,
+            cls.CTBR_FIXED_YAW: 3,
+        }
+        if action_type not in num_actions_mapping:
+            raise ValueError(f"Unknown action_type: {action_type}")
+
+        return num_actions_mapping[action_type]
+
+    @classmethod
+    def get_num_obs(cls, action_type: EnvActionType) -> int:
+        num_obs_mapping = {
+            cls.ROTOR_RPMS: 17,
+            cls.CTBR: 17,
+            cls.CTBR_FIXED_YAW: 16,
+        }
+        if action_type not in num_obs_mapping:
+            raise ValueError(f"Unknown action_type: {action_type}")
+
+        return num_obs_mapping[action_type]
 
 
 # Define action min-max bounds

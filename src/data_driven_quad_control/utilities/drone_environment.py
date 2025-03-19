@@ -2,6 +2,7 @@ from typing import Any
 
 import torch
 
+from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
 from data_driven_quad_control.envs.hover_env import HoverEnv
 
 
@@ -13,6 +14,7 @@ def create_env(
     command_cfg: Any,
     show_viewer: bool = False,
     device: torch.device | str = "cuda",
+    action_type: EnvActionType = EnvActionType.CTBR_FIXED_YAW,
 ) -> HoverEnv:
     env = HoverEnv(
         num_envs=num_envs,
@@ -22,6 +24,7 @@ def create_env(
         command_cfg=command_cfg,
         show_viewer=show_viewer,
         device=device,
+        action_type=action_type,
         auto_target_updates=False,  # Disable automatic target position updates
     )
 

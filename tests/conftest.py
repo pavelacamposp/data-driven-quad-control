@@ -19,7 +19,6 @@ def dummy_env_cfg() -> dict[str, Any]:
     return {
         "dt": 0.01,
         "decimation": 4,
-        "num_actions": 4,
         "simulate_action_latency": True,
         "clip_actions": 1.0,
         "termination_if_roll_greater_than": 180,  # degree
@@ -42,7 +41,6 @@ def dummy_env_cfg() -> dict[str, Any]:
 @pytest.fixture
 def dummy_obs_cfg() -> dict[str, Any]:
     return {
-        "num_obs": 17,
         "obs_scales": {
             "rel_pos": 1.0,
             "lin_vel": 1.0,

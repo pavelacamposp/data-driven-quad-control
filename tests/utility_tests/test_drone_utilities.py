@@ -3,6 +3,7 @@ from typing import Any
 import numpy as np
 import torch
 
+from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
 from data_driven_quad_control.utilities.drone_environment import (
     create_env,
     get_current_env_state,
@@ -30,13 +31,14 @@ def test_hover_env_utilities(
         obs_cfg=dummy_obs_cfg,
         reward_cfg=dummy_reward_cfg,
         command_cfg=dummy_command_cfg,
-        device="cpu",
         show_viewer=False,
+        device="cpu",
+        action_type=EnvActionType.CTBR_FIXED_YAW,
     )
 
     # Reset environment
     obs, _ = env.reset()
-    assert obs.shape == (num_envs, dummy_obs_cfg["num_obs"])
+    assert obs.shape == (num_envs, env.num_obs)
 
     # Initialize drone system model
     base_env_idx = 0  # System model uses a specified env idx

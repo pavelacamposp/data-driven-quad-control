@@ -66,14 +66,18 @@ class HoverEnv:
         self.step_dt = self.dt * self.decimation
 
         self.num_envs = num_envs
-        self.num_obs = obs_cfg["num_obs"]
-        self.num_privileged_obs = None
-
         self.action_type = action_type
-        self.num_actions = env_cfg["num_actions"]
+        self.num_obs = EnvActionType.get_num_obs(self.action_type)
+        self.num_privileged_obs = None
+        self.num_actions = EnvActionType.get_num_actions(self.action_type)
 
-        # Create CTBR controller if the action type is CTBR
-        if self.action_type == EnvActionType.CTBR:
+        # Create CTBR controller if the action type is CTBR or CTBR_FIXED_YAW
+        self.uses_ctbr_actions = self.action_type in (
+            EnvActionType.CTBR,
+            EnvActionType.CTBR_FIXED_YAW,
+        )
+
+        if self.uses_ctbr_actions:
             # Load drone and controller parameters for CTBR controller init
             drone_config = EnvCTBRControllerConfig.get_drone_config()
             controller_config = EnvCTBRControllerConfig.get_controller_config()
@@ -84,10 +88,18 @@ class HoverEnv:
                 device=self.device,
             )
 
+        # Pre-allocate a full-sized rates_setpoints tensor
+        self.rates_setpoints = torch.zeros(
+            (self.num_envs, 3), dtype=torch.float, device=self.device
+        )
+
         # Initialize action bound tensors from configuration file
         self.max_ang_vels = torch.tensor(
             EnvActionBounds.MAX_ANG_VELS, dtype=torch.float, device=self.device
         )
+        # Remove yaw angular velocity bound if action type is CTBR_FIXED_YAW
+        if self.action_type == EnvActionType.CTBR_FIXED_YAW:
+            self.max_ang_vels = self.max_ang_vels[:-1]
 
         self.num_commands = command_cfg["num_commands"]
 
@@ -272,7 +284,10 @@ class HoverEnv:
 
         # perform physics stepping
         for _ in range(self.decimation):
-            if self.action_type == EnvActionType.CTBR:
+            if self.action_type in (
+                EnvActionType.CTBR,
+                EnvActionType.CTBR_FIXED_YAW,
+            ):
                 # Calculate thrust and rate setpoints from actions
                 thrust_setpoints = linear_interpolate(
                     x=exec_actions[:, 0],
@@ -289,10 +304,18 @@ class HoverEnv:
                     y_max=self.max_ang_vels,
                 )
 
+                if self.action_type == EnvActionType.CTBR:
+                    # Assign w_x, w_y, w_z body rates to rates setpoints
+                    self.rates_setpoints[:, :] = rates_setpoints
+                else:
+                    # Only assign w_x, and w_y body rates to rates
+                    # setpoints, while leaving w_z as 0 from initialization
+                    self.rates_setpoints[:, :2] = rates_setpoints
+
                 # Compute rotor RPMs from CTBR controller
                 controller_rpms = self.ctbr_controller.compute(
                     rate_measurements=self.base_ang_vel,
-                    rate_setpoints=rates_setpoints,
+                    rate_setpoints=self.rates_setpoints,
                     thrust_setpoints=thrust_setpoints,
                 )
 
@@ -448,8 +471,8 @@ class HoverEnv:
             )
             self.episode_sums[key][envs_idx] = 0.0
 
-        # Reset CTBR controller state if the action type is CTBR
-        if self.action_type == EnvActionType.CTBR:
+        # Reset CTBR controller state if a CTBR controller is used
+        if self.uses_ctbr_actions:
             self.ctbr_controller.reset()
 
         self._resample_commands(envs_idx)
@@ -484,8 +507,8 @@ class HoverEnv:
             "last_actions": self.last_actions[envs_idx].clone(),
         }
 
-        # Add CTBR controller state if the action type is CTBR
-        if self.action_type == EnvActionType.CTBR:
+        # Add CTBR controller state if a CTBR controller is used
+        if self.uses_ctbr_actions:
             state["ctbr_controller_state"] = self.ctbr_controller.get_state()
 
         return state
@@ -502,7 +525,7 @@ class HoverEnv:
         episode_length = saved_state["episode_length"]
         last_actions = saved_state["last_actions"]
 
-        if self.action_type == EnvActionType.CTBR:
+        if self.uses_ctbr_actions:
             ctbr_controller_state = saved_state["ctbr_controller_state"]
 
         # Reset base
@@ -544,7 +567,7 @@ class HoverEnv:
             self.episode_sums[key][envs_idx] = 0.0
 
         # Load CTBR controller state if the action type is CTBR
-        if self.action_type == EnvActionType.CTBR:
+        if self.uses_ctbr_actions:
             self.ctbr_controller.load_state(ctbr_controller_state)
 
     # ------------ reward functions----------------
