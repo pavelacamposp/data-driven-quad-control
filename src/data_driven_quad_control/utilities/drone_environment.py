@@ -4,64 +4,6 @@ import torch
 
 from data_driven_quad_control.envs.hover_env import HoverEnv
 
-CfgDict = dict[str, Any]
-
-
-def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
-    env_cfg = {
-        # simulation
-        "dt": 0.01,  # sim freq = 100 Hz
-        "decimation": 4,  # ctrl freq = 1 / (0.01 * 4) = 25 Hz
-        # actions
-        "num_actions": 4,
-        "simulate_action_latency": True,
-        "clip_actions": 1.0,
-        # termination
-        "termination_if_roll_greater_than": 180,  # degree
-        "termination_if_pitch_greater_than": 180,
-        "termination_if_close_to_ground": 0.1,
-        "termination_if_x_greater_than": 3.0,
-        "termination_if_y_greater_than": 3.0,
-        "termination_if_z_greater_than": 2.0,
-        # drone initial pose
-        "base_init_pos": [0.0, 0.0, 1.0],
-        "base_init_quat": [1.0, 0.0, 0.0, 0.0],
-        # episode config
-        "episode_length_s": 15.0,
-        "at_target_threshold": 0.1,
-        "resampling_time_s": 3.0,
-        # visualization
-        "visualize_target": False,
-        "visualize_camera": False,
-        "max_visualize_FPS": 100,  # 1 / dt = 100 Hz
-    }
-    obs_cfg = {
-        "num_obs": 17,
-        "obs_scales": {
-            "rel_pos": 1 / 3.0,
-            "lin_vel": 1 / 3.0,
-            "ang_vel": 1 / 3.14159,
-        },
-    }
-    reward_cfg = {
-        "yaw_lambda": -10.0,
-        "reward_scales": {
-            "target": 10.0,
-            "smooth": -1e-4,
-            "yaw": 0.01,
-            "angular": -2e-4,
-            "crash": -10.0,
-        },
-    }
-    command_cfg = {
-        "num_commands": 3,
-        "pos_x_range": [-1.0, 1.0],
-        "pos_y_range": [-1.0, 1.0],
-        "pos_z_range": [1.0, 1.0],
-    }
-
-    return env_cfg, obs_cfg, reward_cfg, command_cfg
-
 
 def create_env(
     num_envs: int,
