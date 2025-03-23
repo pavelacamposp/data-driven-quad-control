@@ -250,6 +250,9 @@ class DroneCTBRController:
         # Compute individual rotor thrust forces from drone
         # angular accelerations and total thrust using mixer
         rotor_thrusts = self.mixer @ self.ctrl_ang_acc_thrust.transpose(0, 1)
+        # Clamp thrust values to prevent negative values
+        # that cause NaNs in RPM calculation
+        rotor_thrusts = torch.clamp(rotor_thrusts, min=0)
 
         # Calculate rotor RPMs from thrusts
         # thrust_i = RPM_i ** 2 * KF
