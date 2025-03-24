@@ -40,7 +40,7 @@ def test_hover_env_loop(
                 dtype=torch.float,
                 device=env.device,
             )
-            obs, _, reward, done, info = env.step(dummy_actions)
+            obs, reward, done, info = env.step(dummy_actions)
 
             assert obs.shape == (num_envs, env.num_obs)
             assert reward.shape == (num_envs,)
