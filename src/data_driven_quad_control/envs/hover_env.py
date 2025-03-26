@@ -10,6 +10,8 @@
 #     controller to support actions consisting of total thrust and body rates.
 #   - Implemented action decimation (number of simulation steps
 #     to take for each task step).
+#   - Added early termination when excessive linear or angular velocities are
+#     encountered to prevent numerical instabilities during simulation.
 #   - Implemented methods for saving and loading environment states.
 #   - Added parameter for disabling automatic target position (command)
 #     updates.
@@ -411,6 +413,20 @@ class HoverEnv:
             | (
                 self.base_pos[:, 2]
                 < self.env_cfg["termination_if_close_to_ground"]
+            )
+            | (
+                torch.any(
+                    torch.abs(self.base_ang_vel)
+                    > self.env_cfg["termination_if_ang_vel_greater_than"],
+                    dim=1,
+                )
+            )
+            | (
+                torch.any(
+                    torch.abs(self.base_lin_vel)
+                    > self.env_cfg["termination_if_lin_vel_greater_than"],
+                    dim=1,
+                )
             )
         )
         self.reset_buf = (
