@@ -51,8 +51,8 @@ def collect_initial_input_output_data(
     During collection, the drone is stabilized at a specified target position
     and yaw using a stabilizing controller. A persistently exciting input,
     generated based on the data-driven MPC controller parameters, is added as
-    a perturbation to the commands of the stabilizing controller. This ensures
-    effective output data collection while maintaining drone stability.
+    a perturbation to the commands from the stabilizing controller. This
+    ensures effective output data collection while maintaining drone stability.
 
     As a result, the actual input used for collecting output data is the sum of
     the stabilizing controller commands and the persistently exciting input.
@@ -129,9 +129,9 @@ def collect_initial_input_output_data(
     # Generate bounded uniformly distributed additive measurement noise
     w_N = eps_max * np_random.uniform(-1.0, 1.0, (N, p))
 
-    # Simulate the system using the commands of a stabilizing controller to
-    # stabilize the drone at a target position, while adding input deviations
-    # from the generated persistently exciting input
+    # Simulate the system using the commands from a stabilizing controller to
+    # stabilize the drone at a target position, while adding the generated
+    # persistently exciting input as a perturbation
     y_N = np.zeros((N, p))
     with torch.no_grad():
         for k in range(N):
@@ -148,7 +148,7 @@ def collect_initial_input_output_data(
             if env.action_type == EnvActionType.CTBR_FIXED_YAW:
                 ctrl_ctbr_cmd = ctrl_ctbr_cmd[:, :-1]
 
-            # Add persistently exciting input deviations to the
+            # Add persistently exciting input as a perturbation to the
             # stabilizing input for input-output data generation
             controller_action_base = ctrl_ctbr_cmd[base_env_idx]
             u_N[k, :] += controller_action_base.squeeze(0).cpu().numpy()

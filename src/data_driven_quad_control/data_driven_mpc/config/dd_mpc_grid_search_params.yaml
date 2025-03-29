@@ -1,0 +1,103 @@
+---
+initial_data_collection:
+  # Target position for data collection
+  # Note:
+  # Drones in simulation are stabilized at this target by a stabilizing
+  # controller. This ensures effective data collection while maintaining drone
+  # stability.
+  init_hover_pos: [0.0, 0.0, 1.5]
+
+  # Range of the persistently exciting input u
+  # Note:
+  # In general, `u_range` defines the space from which persistently exciting
+  # control inputs are sampled. However, in this application, it is used as
+  # a perturbation added to the stabilizing controller's commands.
+  # As a result, the input used for collecting output data is the sum of the
+  # stabilizing controller commands and the persistently exciting input.
+  u_range:
+    - [-0.1, 0.1]  # Total thrust [N]
+    - [-0.5, 0.5]  # Roll angular rate [rad/s]
+    - [-0.5, 0.5]  # Pitch angular rate [rad/s]
+
+fixed_params:
+  Q_weights: [10, 10, 10]  # Output weighting matrix Q weights
+  R_weights: [1, 1, 1]  # Input weighting matrix R weights
+  S_weights: [100, 100, 100]  # Output setpoint weighting matrix S weights
+
+  # Bounds for the predicted input
+  U:
+    - [0.0, 0.52974]  # Total thrust [N]
+    - [-1.5708, 1.5708]  # Roll angular rate [rad/s]
+    - [-1.5708, 1.5708]  # Pitch angular rate [rad/s]
+
+  # Bounds for the predicted input setpoint (must be a subset of U)
+  Us:
+    - [0.001, 0.528]  # Total thrust [N]
+    - [-1.571, 1.570]  # Roll angular rate [rad/s]
+    - [-1.571, 1.570]  # Pitch angular rate [rad/s]
+
+  # Alpha regularization type:
+  # - 0 = Approximated → Regularized w.r.t. an approximation of
+  #                      alpha_Lin^sr(D_t).
+  # - 1 = Previous → Regularized w.r.t. a previous optimal alpha value to
+  #                  encourage stationary behavior.
+  # - 2 = Zero → Regularized w.r.t. zero.
+  alpha_reg_type: 0
+
+  # Control system structure (Extended Output and Input Increments):
+  # - true → Controller uses an extended output representation
+  #          (y_ext[k] = [y[k], u[k]]) and input increments where the control
+  #          input is updated incrementally as: u[k] = u[k-1] + du[k-1].
+  # - false → Standard controller operation. Direct control input, without
+  #           extensions.
+  ext_out_incr_in: false
+
+  # Enable n-Step Data-Driven MPC:
+  # - true = n-Step Data-Driven MPC
+  # - false = 1-Step Data-Driven MPC
+  n_n_mpc_step: false
+
+evaluation_params:
+  # Number of time steps for each controller evaluation run
+  eval_time_steps: 200
+
+  # Target setpoints for evaluation
+  # Each controller is evaluated on its ability to guide a drone toward each
+  # of these target positions.
+  # A controller parameter combination is considered successful if its
+  # corresponding controller commands the drone to move toward each setpoint.
+  # If the drone's distance to its target increases by more than a threshold
+  # (`max_target_dist_increment`) relative to the initial distance, the
+  # evaluation is terminated early and the parameter combination is deemed a
+  # failure.
+  eval_setpoints:
+    - [1.0, 1.0, 2.5]
+    - [1.0, -1.0, 0.5]
+    - [-1.0, 1.0, 1.5]
+
+  # Maximum allowed distance increment for evaluation
+  # This defines the maximum allowable increment in the drone's distance to its
+  # target relative to the initial distance. If exceeded during evaluation, the
+  # run is terminated early.
+  max_target_dist_increment: 0.5
+
+parameter_grid:
+  # Initial input-output trajectory length
+  N: [350]
+
+  # Estimated system order
+  n: [2, 4, 6]
+
+  # Prediction horizon
+  L: [30, 35, 40]
+
+  # Regularization parameters for alpha and sigma
+  lamb_alpha: [1e0, 1e1, 1e2, 1e3, 1e4]
+  lamb_sigma: [1e3, 1e4, 1e5, 1e7, 1e9]
+
+  # Regularization parameter for alpha_s and sigma_s
+  # Note:
+  # Set to [0.0] if the alpha regularization type (`alpha_reg_type`) is not
+  # approximated, as these parameters are unused in that case.
+  lamb_alpha_s: [1e0, 1e1, 1e2, 1e3, 1e4]
+  lamb_sigma_s: [1e3, 1e4, 1e5, 1e7, 1e9]
