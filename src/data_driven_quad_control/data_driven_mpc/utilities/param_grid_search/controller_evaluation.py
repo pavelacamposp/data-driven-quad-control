@@ -21,6 +21,7 @@ from direct_data_driven_mpc.nonlinear_data_driven_mpc_controller import (
 from data_driven_quad_control.envs.config.hover_env_config import EnvState
 
 from .controller_creation import create_dd_mpc_controller_for_combination
+from .isolated_execution import run_in_isolated_process
 from .param_grid_search_config import (
     CtrlEvalStatus,
     DDMPCCombinationParams,
@@ -59,6 +60,10 @@ def evaluate_dd_mpc_controller_combination(
     toward each setpoint. If the drone's distance to its target increases by
     more than a threshold relative to the initial distance, the evaluation is
     terminated early and the combination is deemed a failure.
+
+    The evaluation is executed in an isolated subprocess to ensure correct
+    resource cleanup and to prevent memory leaks caused by CVXPY objects
+    (created during controller creation) persisting across runs.
 
     Args:
         env_idx (int): The environment instance (drone) index selected for
@@ -129,36 +134,26 @@ def evaluate_dd_mpc_controller_combination(
         initial_distance = float(np.linalg.norm(initial_drone_pos - y_r))
 
         try:
-            # Create Nonlinear Data-Driven MPC controller
-            # for the current combination
+            # Isolation: Create Nonlinear Data-Driven MPC controller for the
+            # current combination and evaluate it using the current env
             if verbose > 1:
-                print(f"[Process {env_idx}] Creating controller")
+                print(f"[Process {env_idx}] Running evaluation in isolation")
 
-            dd_mpc_controller = create_dd_mpc_controller_for_combination(
+            rmse = run_in_isolated_process(
+                target_func=isolated_controller_evaluation,
+                env_idx=env_idx,
                 u_N=u_N,
                 y_N=y_N,
                 y_r=y_r,
-                combination_params=combination_params,
-                fixed_params=fixed_params,
-            )
-
-            # Evaluate Nonlinear Data-Driven MPC controller
-            if verbose > 1:
-                print(
-                    f"[Process {env_idx}] Evaluating controller in simulation"
-                )
-
-            rmse = sim_nonlinear_dd_mpc_control_loop_parallel(
-                env_idx=env_idx,
                 env_reset_queue=env_reset_queue,
                 action_queue=action_queue,
                 observation_queue=observation_queue,
-                env_sim_info=env_sim_info,
-                dd_mpc_controller=dd_mpc_controller,
+                combination_params=combination_params,
                 fixed_params=fixed_params,
                 num_steps=eval_params.eval_time_steps,
                 initial_distance=initial_distance,
                 max_target_dist_increment=eval_params.max_target_dist_increment,
+                env_sim_info=env_sim_info,
                 verbose=verbose,
             )
 
@@ -209,6 +204,59 @@ def evaluate_dd_mpc_controller_combination(
         CtrlEvalStatus.FAILURE,
         {"error": "Unknown error in controller evaluation."},
     )
+
+
+def isolated_controller_evaluation(
+    env_idx: int,
+    u_N: np.ndarray,
+    y_N: np.ndarray,
+    y_r: np.ndarray,
+    env_reset_queue: mp.Queue,
+    action_queue: mp.Queue,
+    observation_queue: mp.Queue,
+    num_steps: int,
+    combination_params: DDMPCCombinationParams,
+    fixed_params: DDMPCFixedParams,
+    initial_distance: float,
+    max_target_dist_increment: float,
+    env_sim_info: EnvSimInfo,
+    verbose: int = 0,
+) -> float:
+    # Create Nonlinear Data-Driven MPC controller
+    # for the current combination
+    if verbose > 1:
+        print(f"[Process {env_idx}] Isolated: Creating controller")
+
+    dd_mpc_controller = create_dd_mpc_controller_for_combination(
+        u_N=u_N,
+        y_N=y_N,
+        y_r=y_r,
+        combination_params=combination_params,
+        fixed_params=fixed_params,
+    )
+
+    # Evaluate Nonlinear Data-Driven MPC controller
+    if verbose > 1:
+        print(
+            f"[Process {env_idx}] Isolated: Evaluating controller in "
+            "simulation"
+        )
+
+    rmse = sim_nonlinear_dd_mpc_control_loop_parallel(
+        env_idx=env_idx,
+        env_reset_queue=env_reset_queue,
+        action_queue=action_queue,
+        observation_queue=observation_queue,
+        env_sim_info=env_sim_info,
+        dd_mpc_controller=dd_mpc_controller,
+        fixed_params=fixed_params,
+        num_steps=num_steps,
+        initial_distance=initial_distance,
+        max_target_dist_increment=max_target_dist_increment,
+        verbose=verbose,
+    )
+
+    return rmse
 
 
 def sim_nonlinear_dd_mpc_control_loop_parallel(

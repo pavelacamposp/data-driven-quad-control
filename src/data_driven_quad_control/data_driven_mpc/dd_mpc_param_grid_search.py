@@ -40,6 +40,11 @@ Workflow overview:
    the evaluation terminates early and the parameter combination is deemed a
    failure.
 
+   Controller parameter evaluations are executed within isolated subprocesses
+   to prevent memory leaks between runs. These leaks are caused by CVXPY
+   objects (created during controller creation) not being properly cleaned up,
+   allowing them to persist across runs.
+
    The main process also manages the vectorized environment stepping and
    the drone environment state resets required between each controller
    evaluation run (using the drone states stored in the data-driven cache). It
