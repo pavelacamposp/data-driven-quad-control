@@ -200,10 +200,6 @@ class DroneCTBRController:
         where A is the drone's allocation matrix, and J_x, J_y, and J_z are
         the drone's inertia values along its X, Y, and Z axis, respectively.
 
-        Note:
-            The Coriolis effect is omitted to simplify calculations. This
-            approximation is valid for low to moderate angular velocities.
-
         Returns:
             torch.Tensor: The rate controller's mixer matrix.
         """
