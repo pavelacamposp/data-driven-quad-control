@@ -48,7 +48,7 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         "termination_if_x_greater_than": 3.0,
         "termination_if_y_greater_than": 3.0,
         "termination_if_z_greater_than": 2.0,
-        "termination_if_ang_vel_greater_than": 12.5664,  # rad/s
+        "termination_if_ang_vel_greater_than": 20,  # rad/s
         "termination_if_lin_vel_greater_than": 20,  # m/s
         # drone initial pose
         "base_init_pos": [0.0, 0.0, 1.0],
@@ -153,8 +153,8 @@ class EnvActionBounds:
     MAX_RPM = 1.8 * BASE_RPM
 
     # Collective Thrust and Body Rates bounds
-    MAX_THRUST = 2 * EnvDrone.WEIGHT  # Max total thrust force
-    MAX_ANG_VELS = [0.1, 0.1, 5.0]  # Max roll, pitch, yaw angular velocities
+    MAX_THRUST = 2 * EnvDrone.WEIGHT  # Max total thrust force [N]
+    MAX_ANG_VELS = [15.0, 15.0, 10.0]  # Max roll, pitch, yaw ang vels [rad/s]
 
 
 # Load CTBR controller configuration for env CTBR controller initialization
