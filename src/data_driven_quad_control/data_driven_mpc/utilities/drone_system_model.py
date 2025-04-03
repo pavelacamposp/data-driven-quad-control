@@ -7,20 +7,35 @@ from direct_data_driven_mpc.utilities.models.nonlinear_model import (
     NonlinearSystem,
 )
 
-from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
 from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.utilities.math_utils import linear_interpolate
 
 
 def drone_dynamics(
-    x: np.ndarray, u: np.ndarray, env: HoverEnv, env_idx: int
+    x: np.ndarray,
+    u: np.ndarray,
+    env: HoverEnv,
+    env_action_bounds: torch.Tensor,
+    env_idx: int,
 ) -> np.ndarray:
-    action = u  # Note: action is within the [-1, 1] range
+    action = u  # Note: action is within `env_action_bounds` range
 
     # Convert action to tensor
-    action_tensor = torch.tensor(action, device=env.device).unsqueeze(0)
+    action_tensor = torch.tensor(
+        action, dtype=torch.float, device=env.device
+    ).unsqueeze(0)
+
+    # Normalize action to a [-1, 1] range
+    env_action = linear_interpolate(
+        x=action_tensor,
+        x_min=env_action_bounds[:, 0],
+        x_max=env_action_bounds[:, 1],
+        y_min=-1,
+        y_max=1,
+    )
 
     # Step simulation
-    env.step(action_tensor)
+    env.step(env_action)
 
     # Get system state from environment
     # We assume the state to be the base position, omitting other variables
@@ -37,21 +52,22 @@ def drone_output(x: np.ndarray, u: np.ndarray) -> np.ndarray:
 def create_system_model(
     env: HoverEnv, env_idx: int, initial_state: Optional[np.ndarray] = None
 ) -> NonlinearSystem:
+    # Retrieve env action bounds from env
+    env_action_bounds = env.action_bounds
+
     # Define drone system dynamics function
     drone_dynamics_pre_bound = partial(
-        drone_dynamics, env=env, env_idx=env_idx
+        drone_dynamics,
+        env=env,
+        env_action_bounds=env_action_bounds,
+        env_idx=env_idx,
     )
 
     # Define system model (simulation)
     n = 3  # Number of system states (only necessary for storage
     # since the simulation is handled by the env)
 
-    # Number of control inputs
-    if env.action_type == EnvActionType.CTBR_FIXED_YAW:
-        m = 3
-    else:
-        m = 4
-
+    m = env_action_bounds.shape[0]  # Number of control inputs
     p = 3  # Number of system outputs
     eps_max = 0.0  # Upper bound of the system measurement noise
     system_model = NonlinearSystem(
