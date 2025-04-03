@@ -9,6 +9,7 @@ parameters from a controller parameter grid search and evaluated through
 closed-loop simulation.
 """
 
+import logging
 import math
 from typing import Any
 
@@ -29,6 +30,12 @@ from .param_grid_search_config import (
     DDMPCFixedParams,
     EnvSimInfo,
 )
+from .resource_usage_logging import (
+    log_system_resources,
+)
+
+# Retrieve main process logger
+logger = logging.getLogger(__name__)
 
 
 def evaluate_dd_mpc_controller_combination(
@@ -42,7 +49,6 @@ def evaluate_dd_mpc_controller_combination(
     combination_params: DDMPCCombinationParams,
     fixed_params: DDMPCFixedParams,
     eval_params: DDMPCEvaluationParams,
-    verbose: int = 0,
 ) -> tuple[CtrlEvalStatus, dict[str, Any]]:
     """
     Evaluate a data-driven MPC parameter combination based on the position
@@ -92,8 +98,6 @@ def evaluate_dd_mpc_controller_combination(
         eval_params (DDMPCEvaluationParams): The parameters that define the
             evaluation procedure for each controller parameter combination in
             the grid search.
-        verbose (int): The verbosity level: 0 = no output, 1 = minimal output,
-            2 = detailed output. Defaults to 0.
 
     Returns:
         tuple[CtrlEvalStatus, dict[str, Any]]: A tuple containing:
@@ -103,8 +107,8 @@ def evaluate_dd_mpc_controller_combination(
               the controller evaluation average RMSE, number of successful
               runs, and failure reason (if any).
     """
-    if verbose > 1:
-        print(f"[Process {env_idx}] Entered evaluation")
+    logger.info(f"[Process {env_idx}] Entered evaluation")
+    log_system_resources(one_line=True)
 
     # Evaluate controller parameter combination with different setpoints
     eval_setpoints = eval_params.eval_setpoints
@@ -136,8 +140,7 @@ def evaluate_dd_mpc_controller_combination(
         try:
             # Isolation: Create Nonlinear Data-Driven MPC controller for the
             # current combination and evaluate it using the current env
-            if verbose > 1:
-                print(f"[Process {env_idx}] Running evaluation in isolation")
+            logger.info(f"[Process {env_idx}] Running evaluation in isolation")
 
             rmse = run_in_isolated_process(
                 target_func=isolated_controller_evaluation,
@@ -154,14 +157,12 @@ def evaluate_dd_mpc_controller_combination(
                 initial_distance=initial_distance,
                 max_target_dist_increment=eval_params.max_target_dist_increment,
                 env_sim_info=env_sim_info,
-                verbose=verbose,
             )
 
             rmse_values.append(rmse)
 
         except Exception as e:
-            if verbose > 1:
-                print(f"[Process {env_idx}] Exception in evaluation: {e}")
+            logger.exception(f"[Process {env_idx}] Exception in evaluation")
 
             has_failed = True
 
@@ -189,6 +190,10 @@ def evaluate_dd_mpc_controller_combination(
             }
 
             return (CtrlEvalStatus.FAILURE, failed_result)
+
+        finally:
+            logger.info(f"[Process {env_idx}] Evaluation completed")
+            log_system_resources(one_line=True)
 
     if not has_failed:
         # Store results unpacking combination parameters
@@ -220,12 +225,11 @@ def isolated_controller_evaluation(
     initial_distance: float,
     max_target_dist_increment: float,
     env_sim_info: EnvSimInfo,
-    verbose: int = 0,
 ) -> float:
     # Create Nonlinear Data-Driven MPC controller
     # for the current combination
-    if verbose > 1:
-        print(f"[Process {env_idx}] Isolated: Creating controller")
+    logger.info(f"[Process {env_idx}] Isolated: Creating controller")
+    log_system_resources(indent_level=1, one_line=True)
 
     dd_mpc_controller = create_dd_mpc_controller_for_combination(
         u_N=u_N,
@@ -236,11 +240,9 @@ def isolated_controller_evaluation(
     )
 
     # Evaluate Nonlinear Data-Driven MPC controller
-    if verbose > 1:
-        print(
-            f"[Process {env_idx}] Isolated: Evaluating controller in "
-            "simulation"
-        )
+    logger.info(
+        f"[Process {env_idx}] Isolated: Evaluating controller in simulation"
+    )
 
     rmse = sim_nonlinear_dd_mpc_control_loop_parallel(
         env_idx=env_idx,
@@ -253,7 +255,6 @@ def isolated_controller_evaluation(
         num_steps=num_steps,
         initial_distance=initial_distance,
         max_target_dist_increment=max_target_dist_increment,
-        verbose=verbose,
     )
 
     return rmse
@@ -270,7 +271,6 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
     num_steps: int,
     initial_distance: float,
     max_target_dist_increment: float,
-    verbose: int = 0,
 ) -> float:
     """
     Simulate a closed-loop control using a nonlinear data-driven MPC controller
@@ -308,8 +308,6 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
         max_target_dist_increment (float): The maximum allowed increment in
             distance to the target relative to the initial distance. If
             exceeded, the evaluation run is terminated early.
-        verbose (int): The verbosity level: 0 = no output, 1 = minimal output,
-            2 = detailed output. Defaults to 0.
 
     Returns:
         float: The root mean square error (RMSE) of the drone's position
@@ -343,11 +341,10 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
             # Advance step progress
             env_sim_info.sim_step_progress += 1
 
-            if verbose > 1:
-                print(
-                    f"[Process {env_idx}] Reset state ("
-                    f"{env_sim_info.reset_state}) sent to queue"
-                )
+            logger.info(
+                f"[Process {env_idx}] Reset state ("
+                f"{env_sim_info.reset_state}) sent to queue"
+            )
 
             # Update control input
             n_step = k - t
@@ -362,10 +359,9 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
             action_queue.put((env_idx, u_sys[k, :]))
             env_sim_info.sim_step_progress += 1  # Advance sim step progress
 
-            if verbose > 1:
-                print(
-                    f"[Process {env_idx}] Action sent to queue: {u_sys[k, :]}"
-                )
+            logger.info(
+                f"[Process {env_idx}] Action sent to queue: {u_sys[k, :]}"
+            )
 
             # Get observations from vectorized environment
             env_observations = observation_queue.get()
@@ -374,11 +370,10 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
             # for the current env
             y_sys[k, :] = env_observations[env_idx]
 
-            if verbose > 1:
-                print(
-                    f"[Process {env_idx}] Observation received from queue: "
-                    f"{y_sys[k, :]}"
-                )
+            logger.info(
+                f"[Process {env_idx}] Observation received from queue: "
+                f"{y_sys[k, :]}"
+            )
 
             # Update input-output measurements online
             du_current = dd_mpc_controller.get_du_value_at_step(n_step=n_step)
@@ -393,6 +388,11 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
             # is greater than the initial distance
             current_distance = np.linalg.norm(y_sys[k, :].reshape(-1, 1) - y_r)
             if current_distance - initial_distance > max_target_dist_increment:
+                logger.warning(
+                    f"[Process {env_idx}] Drone moved too far from its "
+                    "target. Raising ValueError to terminate evaluation."
+                )
+
                 raise ValueError(
                     "Drone moved away from its target by more than "
                     f"{max_target_dist_increment} relative to its initial "

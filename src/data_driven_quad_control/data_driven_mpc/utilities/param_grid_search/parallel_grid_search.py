@@ -14,6 +14,7 @@ Communication with workers occurs via multiprocessing queues in synchronized
 loops, preventing deadlocks.
 """
 
+import logging
 from typing import Any
 
 import psutil
@@ -38,6 +39,12 @@ from .param_grid_search_config import (
     DDMPCEvaluationParams,
     DDMPCFixedParams,
 )
+from .resource_usage_logging import (
+    log_system_resources,
+)
+
+# Retrieve main process logger
+logger = logging.getLogger(__name__)
 
 
 def parallel_grid_search(
@@ -48,7 +55,6 @@ def parallel_grid_search(
     eval_params: DDMPCEvaluationParams,
     data_driven_cache: DataDrivenCache,
     drone_state_cache: dict[int, EnvState],
-    verbose: int = 0,
 ) -> dict[CtrlEvalStatus, list[dict[str, Any]]]:
     """
     Execute a parallel grid search over nonlinear data-driven MPC controller
@@ -87,8 +93,6 @@ def parallel_grid_search(
             input-output trajectory length (`N`) values to drone states for use
             in environment resets. Each drone state must be allocated on the
             environment's device.
-        verbose (int): The verbosity level: 0 = no output, 1 = minimal output,
-            2 = detailed output. Defaults to 0.
 
     Returns:
         dict[CtrlEvalStatus, list[dict[str, Any]]]: A dictionary mapping
@@ -96,6 +100,12 @@ def parallel_grid_search(
             `CtrlEvalStatus.FAILURE`) to lists of result dictionaries, each
             containing evaluation metrics and context.
     """
+    logger.info(
+        f"Starting parallel grid search with {num_processes} processes."
+    )
+    # Log system resources before starting multiprocessing
+    log_system_resources(indent_level=1)
+
     # Retrieve environment parameters
     env_action_bounds = env.action_bounds  # Env action bounds used for
     # control action normalization
@@ -121,8 +131,7 @@ def parallel_grid_search(
     # Create and start worker processes
     processes: list[mp.Process] = []
     for process_id in range(num_processes):
-        if verbose > 1:
-            print(f"[MAIN] Created {process_id + 1} processes")
+        logger.info(f"[MAIN] Created {process_id + 1} processes")
 
         p = mp.Process(
             target=worker_data_driven_mpc,
@@ -139,15 +148,13 @@ def parallel_grid_search(
                 data_driven_cache,
                 fixed_params,
                 eval_params,
-                verbose,
             ),
         )
         processes.append(p)
         p.start()
 
     # Step environment in the main process
-    if verbose > 1:
-        print("[MAIN] Started env stepping")
+    logger.info("[MAIN] Started env stepping")
 
     total_tasks = len(parameter_combinations)
     done_processes = 0  # Track how many processes have finished
@@ -169,15 +176,12 @@ def parallel_grid_search(
             # Update number of active processes
             active_processes = num_processes - done_processes
 
-            if verbose > 1:
-                print(
-                    f"[MAIN] Done: {done_processes}  Active: "
-                    f"{active_processes}"
-                )
+            logger.info(
+                f"[MAIN] Done: {done_processes}  Active: {active_processes}"
+            )
 
             # Handle environment reset
-            if verbose > 1:
-                print("[MAIN] Reached env reset point")
+            logger.info("[MAIN] Reached env reset point")
 
             for _ in range(active_processes):
                 env_idx, reset, done, N = env_reset_queue.get()
@@ -187,8 +191,7 @@ def parallel_grid_search(
                     done_processes += 1  # Increment finished process count
                     active_processes -= 1  # Decrement active process count
 
-                    if verbose > 1:
-                        print(f"[MAIN] Process {env_idx} finished.")
+                    logger.info(f"[MAIN] Process {env_idx} finished")
 
                     continue
 
@@ -202,25 +205,20 @@ def parallel_grid_search(
                         saved_state=initial_drone_state,
                     )
 
-                    if verbose > 1:
-                        print(
-                            f"[MAIN] Restored initial state for Process "
-                            f"{env_idx}"
-                        )
+                    logger.info(
+                        f"[MAIN] Restored initial state for Process {env_idx}"
+                    )
 
-            if verbose > 1:
-                print("[MAIN] Reached env step point")
+            logger.info("[MAIN] Reached env step point")
 
             # Get actions from action queue for each process
             actions_buffer.zero_()
             for _ in range(active_processes):
                 env_idx, action = action_queue.get()
 
-                if verbose > 1:
-                    print(
-                        f"[MAIN] Action received for Process {env_idx}: "
-                        f"{action}"
-                    )
+                logger.info(
+                    f"[MAIN] Action received for Process {env_idx}: {action}"
+                )
 
                 # Convert action array to tensor
                 action = torch.tensor(action, device=env.device).unsqueeze(0)
@@ -248,15 +246,13 @@ def parallel_grid_search(
                 # Data-Driven MPC control system
                 observation = env.base_pos.cpu().numpy()
 
-                if verbose > 1:
-                    print("[MAIN] Reached env observation sending point")
+                logger.info("[MAIN] Reached env observation sending point")
 
                 # Send observations to workers
                 for _ in range(active_processes):
                     observation_queue.put(observation)
 
-                if verbose > 1:
-                    print(f"[MAIN] Sent {active_processes} observations")
+                logger.info(f"[MAIN] Sent {active_processes} observations")
 
     # Wait for all processes to complete
     for p in processes:
@@ -265,8 +261,8 @@ def parallel_grid_search(
     # Close global progress bar
     global_pbar.close()
 
-    if verbose > 1:
-        print("[MAIN] Parallel Grid Search finished")
+    logger.info("[MAIN] Parallel Grid Search finished")
+    log_system_resources()  # Log system usage after processing
 
     return {
         CtrlEvalStatus.SUCCESS: list(successful_results),

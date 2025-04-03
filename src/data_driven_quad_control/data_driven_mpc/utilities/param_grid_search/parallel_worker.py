@@ -13,6 +13,7 @@ Workers terminate when no tasks remain or upon exception, sending a termination
 signal to the main process to report task completion.
 """
 
+import logging
 from multiprocessing.managers import ListProxy
 from multiprocessing.sharedctypes import Synchronized
 from multiprocessing.synchronize import Lock
@@ -29,6 +30,9 @@ from .param_grid_search_config import (
     DDMPCFixedParams,
 )
 
+# Retrieve main process logger
+logger = logging.getLogger(__name__)
+
 
 def worker_data_driven_mpc(
     process_id: int,
@@ -43,7 +47,6 @@ def worker_data_driven_mpc(
     data_driven_cache: DataDrivenCache,
     fixed_params: DDMPCFixedParams,
     eval_params: DDMPCEvaluationParams,
-    verbose: int = 0,
 ) -> None:
     """
     Parallel worker process that independently evaluates nonlinear data-driven
@@ -87,19 +90,22 @@ def worker_data_driven_mpc(
         eval_params (DDMPCEvaluationParams): The parameters that define the
             evaluation procedure for each controller parameter combination in
             the grid search.
-        verbose (int): The verbosity level: 0 = no output, 1 = minimal output,
-            2 = detailed output. Defaults to 0.
     """
+    logger.info(f"[Worker] Process {process_id} started")
+
     # Loop until there are no more combinations to test
     while True:
-        if verbose > 1:
-            print(f"[Worker] Entered process {process_id}")
+        logger.info(f"[Worker] Entered process {process_id}")
 
         try:
             # Get the next Nonlinear Data-Driven MPC
             # parameter combination with a timeout
             combination_params: DDMPCCombinationParams = (
                 combination_params_queue.get(timeout=1)
+            )
+            logger.info(
+                f"[Worker] Process {process_id} evaluating params: "
+                f"{combination_params._asdict()}."
             )
 
             # Get `N` from combination params
@@ -113,8 +119,7 @@ def worker_data_driven_mpc(
             initial_drone_state = data_driven_cache.drone_state[N]
 
             # Evaluate the combination
-            if verbose > 1:
-                print(f"[Worker] Entered evaluation in process {process_id}")
+            logger.info(f"[Worker] Entered evaluation in process {process_id}")
 
             status, result = evaluate_dd_mpc_controller_combination(
                 env_idx=process_id,
@@ -127,24 +132,28 @@ def worker_data_driven_mpc(
                 combination_params=combination_params,
                 fixed_params=fixed_params,
                 eval_params=eval_params,
-                verbose=verbose,
             )
 
             # Store results
             with lock:
                 if status == CtrlEvalStatus.SUCCESS:
                     successful_results.append(result)
+                    logger.info(
+                        f"[Worker] Process {process_id} succeeded with "
+                        f"params: {combination_params._asdict()}."
+                    )
                 else:
                     failed_result.append(result)
+                    logger.error(
+                        f"[Worker] Process {process_id} failed: {result}."
+                    )
 
         except Empty:
-            if verbose > 1:
-                print(f"[Worker] Process {process_id} found no more tasks.")
+            logger.info(f"[Worker] Process {process_id} found no more tasks.")
             break
 
         except Exception as e:
-            if verbose > 1:
-                print(f"[Worker] Exception in process {process_id}: {e}")
+            logger.exception(f"[Worker] Exception in process {process_id}")
 
             with lock:
                 failed_result.append(
@@ -161,5 +170,4 @@ def worker_data_driven_mpc(
     # Signal task completion to main process
     env_reset_queue.put((process_id, False, True, None))
 
-    if verbose > 1:
-        print(f"[Worker] ----- Process {process_id} finished -----")
+    logger.info(f"[Worker] ----- Process {process_id} finished -----")

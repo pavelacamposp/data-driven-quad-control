@@ -75,6 +75,7 @@ efficient, and safe parameter searches.
 """
 
 import argparse
+import logging
 import os
 import time
 import warnings
@@ -116,6 +117,18 @@ warnings.filterwarnings("ignore", category=UserWarning, module="cvxpy")
 # Directory for storing Data-Driven MPC parameter grid search results
 GRID_SEARCH_RESULTS_DIR = "logs/dd_mpc_grid_search"
 os.makedirs(GRID_SEARCH_RESULTS_DIR, exist_ok=True)
+
+# Configure main process logger
+LOG_FILENAME = os.path.join(
+    GRID_SEARCH_RESULTS_DIR, "parallel_grid_search.log"
+)
+logging.basicConfig(
+    filename=LOG_FILENAME,
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 # Directory paths
 DD_MPC_CONFIG_DIR = os.path.abspath(
@@ -169,6 +182,11 @@ def parse_args() -> argparse.Namespace:
         help="The verbosity level: 0 = no output, 1 = minimal output, 2 = "
         "detailed output.",
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debugging logging.",
+    )
 
     return parser.parse_args()
 
@@ -183,6 +201,10 @@ def main() -> None:
     gui = args.gui
     seed = args.seed
     verbose = args.verbose
+    debug = args.debug
+
+    # Disable logger if not in debug mode
+    logger.disabled = not debug
 
     if verbose:
         print(
@@ -191,9 +213,17 @@ def main() -> None:
         )
         print("-" * 80)
 
+        if debug:
+            print("Debug logging enabled")
+            print(f"    Logging debug output to: {LOG_FILENAME}")
+
+    logger.info("[DD-MPC-GS] Started parallel grid search execution")
+
     # Grid Search parameters
     if verbose:
         print(f"Number of parallel processes: {num_processes}\n")
+
+    logger.info(f"[DD-MPC-GS] Number of parallel processes: {num_processes}")
 
     # Create a Random Number Generator for reproducibility
     np_random = np.random.default_rng(seed=seed)
@@ -204,6 +234,8 @@ def main() -> None:
 
         if verbose > 1 and seed is not None:
             print(f"    RNG seed: {seed}")
+
+    logger.info("[DD-MPC-GS] Initializing Genesis simulator")
 
     gs.init(seed=seed, backend=gs.gpu, logging_level="error")
 
@@ -222,6 +254,8 @@ def main() -> None:
     if verbose:
         print(f"Creating vectorized environment with {num_processes} drones")
 
+    logger.info("[DD-MPC-GS] Creating drone environment")
+
     num_envs = num_processes
     show_viewer = gui
     env = create_env(
@@ -239,6 +273,8 @@ def main() -> None:
     # Load parameters for the data-driven MPC controller parameter grid search
     if verbose:
         print("Loading grid search parameters from configuration file")
+
+    logger.info("[DD-MPC-GS] Loading grid search parameters from config file")
 
     m = env.num_actions  # Number of inputs
     p = 3  # Number of outputs (drone position)
@@ -273,6 +309,8 @@ def main() -> None:
     if verbose:
         print(f"Hovering drones at target {target_pos.tolist()}")
 
+    logger.info(f"[DD-MPC-GS] Hovering drones at target {target_pos.tolist()}")
+
     target_pos = target_pos.expand(env.num_envs, -1)
     target_yaw = target_yaw.expand(env.num_envs)
     hover_at_target(
@@ -287,12 +325,16 @@ def main() -> None:
     if verbose:
         print("Saving hovering drone state for resets during data collection")
 
+    logger.info("[DD-MPC-GS] Saving hovering drone state for resets")
+
     init_hovering_state = get_current_env_state(env=env, env_idx=base_env_idx)
 
     # Create data-driven cache:
     # Collect initial input-output data and save drone env states
     if verbose:
         print("Starting data-driven cache creation")
+
+    logger.info("[DD-MPC-GS] Starting data-driven cache creation")
 
     data_driven_cache, drone_state_cache = cache_initial_data_and_states(
         env=env,
@@ -313,6 +355,8 @@ def main() -> None:
             "Data-driven cache created from collected data and saved "
             "drone states"
         )
+
+    logger.info("[DD-MPC-GS] Data-driven cache created")
 
     # Perform grid search in parallel
     if verbose:
@@ -346,6 +390,11 @@ def main() -> None:
             print(f"    Alpha regularization type: {alpha_reg_type.name}")
             print(f"    n-step Data-Driven MPC: {n_n_mpc_step}")
 
+    logger.info(
+        f"Starting parameter grid search with {len(parameter_combinations)} "
+        "combinations"
+    )
+
     try:
         with torch.no_grad():
             results = parallel_grid_search(
@@ -356,7 +405,6 @@ def main() -> None:
                 eval_params=eval_params,
                 data_driven_cache=data_driven_cache,
                 drone_state_cache=drone_state_cache,
-                verbose=verbose,
             )
 
         # Write results to a file
@@ -375,11 +423,15 @@ def main() -> None:
         if verbose:
             print(f"\nGrid search results written to {output_file}.")
 
+        logger.info(f"Grid search results written to {output_file}.")
+
     except Exception as e:
         print(f"Parallel grid search failed with error: {str(e)}")
+        logger.exception("Fatal error in main()")
 
     finally:
         print("Parallel grid search finished.")
+        logger.info("Parallel grid search finished.")
 
 
 if __name__ == "__main__":
