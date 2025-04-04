@@ -93,13 +93,40 @@ class HoverEnv:
             (self.num_envs, 3), dtype=torch.float, device=self.device
         )
 
-        # Initialize action bound tensors from configuration file
-        self.max_ang_vels = torch.tensor(
-            EnvActionBounds.MAX_ANG_VELS, dtype=torch.float, device=self.device
-        )
-        # Remove yaw angular velocity bound if action type is CTBR_FIXED_YAW
-        if self.action_type == EnvActionType.CTBR_FIXED_YAW:
-            self.max_ang_vels = self.max_ang_vels[:-1]
+        # Define action bounds for inverse normalization of actions
+        if self.uses_ctbr_actions:
+            # Construct thrust bounds tensor
+            thrust_bounds = torch.tensor(
+                [[0, EnvActionBounds.MAX_THRUST]],
+                dtype=torch.float,
+                device=self.device,
+            )
+
+            # Construct angular velocity bounds tensor
+            max_ang_vels = torch.tensor(
+                EnvActionBounds.MAX_ANG_VELS,
+                dtype=torch.float,
+                device=self.device,
+            )
+
+            # Remove yaw angular velocity bound
+            # if the action type is CTBR_FIXED_YAW
+            if self.action_type == EnvActionType.CTBR_FIXED_YAW:
+                max_ang_vels = max_ang_vels[:-1]
+
+            ang_vel_bounds = torch.hstack(
+                [-max_ang_vels.view(-1, 1), max_ang_vels.view(-1, 1)]
+            )
+
+            # Construct CTBR action bounds tensor
+            self.action_bounds = torch.vstack([thrust_bounds, ang_vel_bounds])
+        else:
+            # Construct rotor RPM action bounds tensor
+            self.action_bounds = torch.tensor(
+                [[EnvActionBounds.MIN_RPM, EnvActionBounds.MAX_RPM]],
+                dtype=torch.float,
+                device=self.device,
+            )
 
         self.num_commands = command_cfg["num_commands"]
 
@@ -289,34 +316,27 @@ class HoverEnv:
                 EnvActionType.CTBR_FIXED_YAW,
             ):
                 # Calculate thrust and rate setpoints from actions
-                thrust_setpoints = linear_interpolate(
-                    x=exec_actions[:, 0],
+                ctbr_action = linear_interpolate(
+                    x=exec_actions,
                     x_min=-1,
                     x_max=1,
-                    y_min=0.0,
-                    y_max=EnvActionBounds.MAX_THRUST,
-                )
-                rates_setpoints = linear_interpolate(
-                    x=exec_actions[:, 1:],
-                    x_min=-1,
-                    x_max=1,
-                    y_min=-self.max_ang_vels,
-                    y_max=self.max_ang_vels,
+                    y_min=self.action_bounds[:, 0],
+                    y_max=self.action_bounds[:, 1],
                 )
 
                 if self.action_type == EnvActionType.CTBR:
                     # Assign w_x, w_y, w_z body rates to rates setpoints
-                    self.rates_setpoints[:, :] = rates_setpoints
+                    self.rates_setpoints[:, :] = ctbr_action[:, 1:]
                 else:
                     # Only assign w_x, and w_y body rates to rates
                     # setpoints, while leaving w_z as 0 from initialization
-                    self.rates_setpoints[:, :2] = rates_setpoints
+                    self.rates_setpoints[:, :2] = ctbr_action[:, 1:]
 
                 # Compute rotor RPMs from CTBR controller
                 controller_rpms = self.ctbr_controller.compute(
                     rate_measurements=self.base_ang_vel,
                     rate_setpoints=self.rates_setpoints,
-                    thrust_setpoints=thrust_setpoints,
+                    thrust_setpoints=ctbr_action[:, 0],
                 )
 
                 # Set drone propeller RPMs
@@ -327,8 +347,8 @@ class HoverEnv:
                     x=exec_actions,
                     x_min=-1,
                     x_max=1,
-                    y_min=EnvActionBounds.MIN_RPM,
-                    y_max=EnvActionBounds.MAX_RPM,
+                    y_min=self.action_bounds[:, 0],
+                    y_max=self.action_bounds[:, 1],
                 )
 
                 # Set drone propeller RPMs
