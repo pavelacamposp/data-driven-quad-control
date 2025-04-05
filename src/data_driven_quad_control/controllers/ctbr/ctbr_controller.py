@@ -1,6 +1,7 @@
 import torch
 
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
+    VectorizedControllerState,
     VectorizedPIDController,
 )
 
@@ -266,21 +267,21 @@ class DroneCTBRController:
         """
         self.rate_pid_controller.reset()
 
-    def get_state(self) -> dict[str, torch.Tensor]:
+    def get_state(self) -> VectorizedControllerState:
         """
         Return the current CTBR controller state.
 
         Returns:
-            dict[str, torch.Tensor]: The internal state of the controller.
+            VectorizedControllerState: The internal state of the controller.
         """
         return self.rate_pid_controller.get_state()
 
-    def load_state(self, state: dict[str, torch.Tensor]) -> None:
+    def load_state(self, state: VectorizedControllerState) -> None:
         """
         Restore the CTBR controller state from a given state dictionary.
 
         Args:
-            state (dict[str, torch.Tensor]): The state to which the controller
-                is restored.
+            state (VectorizedControllerState): The state to which the
+                controller is restored.
         """
         self.rate_pid_controller.load_state(state)

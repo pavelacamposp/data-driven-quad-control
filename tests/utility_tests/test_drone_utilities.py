@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from typing import Any
 
 import numpy as np
@@ -80,7 +81,7 @@ def test_hover_env_utilities(
     )
 
     assert compare_dicts_str_tensor(
-        initial_base_env_state, restored_base_env_state
+        asdict(initial_base_env_state), asdict(restored_base_env_state)
     ), "Env states differ after restore."
 
 

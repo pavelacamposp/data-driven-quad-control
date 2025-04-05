@@ -35,6 +35,7 @@ from data_driven_quad_control.envs.config.hover_env_config import (
     EnvActionBounds,
     EnvActionType,
     EnvCTBRControllerConfig,
+    EnvState,
 )
 from data_driven_quad_control.utilities.math_utils import (
     gs_rand_float,
@@ -514,39 +515,38 @@ class HoverEnv:
             )
 
     # ------------ save/load state ------------
-    def get_current_state(
-        self, envs_idx: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
-        state = {
-            "base_pos": self.base_pos[envs_idx].clone(),
-            "base_quat": self.base_quat[envs_idx].clone(),
-            "base_lin_vel": self.base_lin_vel[envs_idx].clone(),
-            "base_ang_vel": self.base_ang_vel[envs_idx].clone(),
-            "commands": self.commands[envs_idx].clone(),
-            "episode_length": self.episode_length_buf[envs_idx].clone(),
-            "last_actions": self.last_actions[envs_idx].clone(),
-        }
-
-        # Add CTBR controller state if a CTBR controller is used
+    def get_current_state(self, envs_idx: torch.Tensor) -> EnvState:
+        ctbr_state = None
         if self.uses_ctbr_actions:
-            state["ctbr_controller_state"] = self.ctbr_controller.get_state()
+            # Add CTBR controller state if a CTBR controller is used
+            ctbr_state = self.ctbr_controller.get_state()
 
-        return state
+        return EnvState(
+            base_pos=self.base_pos[envs_idx].clone(),
+            base_quat=self.base_quat[envs_idx].clone(),
+            base_lin_vel=self.base_lin_vel[envs_idx].clone(),
+            base_ang_vel=self.base_ang_vel[envs_idx].clone(),
+            commands=self.commands[envs_idx].clone(),
+            episode_length=self.episode_length_buf[envs_idx].clone(),
+            last_actions=self.last_actions[envs_idx].clone(),
+            ctbr_controller_state=ctbr_state,
+        )
 
     def restore_from_state(
-        self, envs_idx: torch.Tensor, saved_state: dict[str, torch.Tensor]
+        self, envs_idx: torch.Tensor, saved_state: EnvState
     ) -> None:
-        # Retrieve variables from saved state
-        base_pos = saved_state["base_pos"]
-        base_quat = saved_state["base_quat"]
-        base_lin_vel = saved_state["base_lin_vel"]
-        base_ang_vel = saved_state["base_ang_vel"]
-        commands = saved_state["commands"]
-        episode_length = saved_state["episode_length"]
-        last_actions = saved_state["last_actions"]
+        # Retrieve and clone variables from saved state
+        base_pos = saved_state.base_pos.clone()
+        base_quat = saved_state.base_quat.clone()
+        base_lin_vel = saved_state.base_lin_vel.clone()
+        base_ang_vel = saved_state.base_ang_vel.clone()
+        commands = saved_state.commands.clone()
+        episode_length = saved_state.episode_length.clone()
+        last_actions = saved_state.last_actions.clone()
 
         if self.uses_ctbr_actions:
-            ctbr_controller_state = saved_state["ctbr_controller_state"]
+            assert saved_state.ctbr_controller_state is not None
+            ctbr_controller_state = saved_state.ctbr_controller_state.clone()
 
         # Reset base
         self.base_pos[envs_idx] = base_pos

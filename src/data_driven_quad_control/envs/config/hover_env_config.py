@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
+import torch
 import yaml
+
+from data_driven_quad_control.utilities.vectorized_pid_controller import (
+    VectorizedControllerState,
+)
 
 # Config file paths for CTBR controller parameters
 DRONE_CONFIG_PATH = os.path.join(
@@ -158,3 +164,35 @@ class EnvCTBRControllerConfig:
     @staticmethod
     def get_controller_config() -> Any:
         return load_yaml_config(path=CTBR_CONFIG_PATH)
+
+
+# Drone environment state for saving and loading
+@dataclass
+class EnvState:
+    base_pos: torch.Tensor
+    base_quat: torch.Tensor
+    base_lin_vel: torch.Tensor
+    base_ang_vel: torch.Tensor
+    commands: torch.Tensor
+    episode_length: torch.Tensor
+    last_actions: torch.Tensor
+    ctbr_controller_state: Optional[VectorizedControllerState] = None
+
+    def to(self, device: torch.device | str) -> EnvState:
+        return EnvState(
+            base_pos=self.base_pos.to(device),
+            base_quat=self.base_quat.to(device),
+            base_lin_vel=self.base_lin_vel.to(device),
+            base_ang_vel=self.base_ang_vel.to(device),
+            commands=self.commands.to(device),
+            episode_length=self.episode_length.to(device),
+            last_actions=self.last_actions.to(device),
+            ctbr_controller_state=(
+                self.ctbr_controller_state.to(device)
+                if self.ctbr_controller_state
+                else None
+            ),
+        )
+
+    def to_cpu(self) -> EnvState:
+        return self.to("cpu")

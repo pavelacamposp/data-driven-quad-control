@@ -2,7 +2,10 @@ from typing import Any
 
 import torch
 
-from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
+from data_driven_quad_control.envs.config.hover_env_config import (
+    EnvActionType,
+    EnvState,
+)
 from data_driven_quad_control.envs.hover_env import HoverEnv
 
 
@@ -31,9 +34,7 @@ def create_env(
     return env
 
 
-def get_current_env_state(
-    env: HoverEnv, env_idx: int
-) -> dict[str, torch.Tensor]:
+def get_current_env_state(env: HoverEnv, env_idx: int) -> EnvState:
     # Convert env_idx int into a tensor list of env indices
     envs_idx_tensor = get_tensor_from_env_idx(env=env, env_idx=env_idx)
 
@@ -41,7 +42,7 @@ def get_current_env_state(
 
 
 def restore_env_from_state(
-    env: HoverEnv, env_idx: int, saved_state: dict[str, torch.Tensor]
+    env: HoverEnv, env_idx: int, saved_state: EnvState
 ) -> None:
     envs_idx_tensor = get_tensor_from_env_idx(env=env, env_idx=env_idx)
 

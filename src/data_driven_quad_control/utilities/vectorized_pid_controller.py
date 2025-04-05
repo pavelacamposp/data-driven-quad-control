@@ -1,4 +1,25 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
 import torch
+
+
+@dataclass
+class VectorizedControllerState:
+    integral: torch.Tensor
+    prev_error: torch.Tensor
+
+    def clone(self) -> VectorizedControllerState:
+        return VectorizedControllerState(
+            integral=self.integral.clone(), prev_error=self.prev_error.clone()
+        )
+
+    def to(self, device: torch.device | str) -> VectorizedControllerState:
+        return VectorizedControllerState(
+            integral=self.integral.to(device),
+            prev_error=self.prev_error.to(device),
+        )
 
 
 class VectorizedPIDController:
@@ -113,26 +134,25 @@ class VectorizedPIDController:
         self.integral.zero_()
         self.prev_error.zero_()
 
-    def get_state(self) -> dict[str, torch.Tensor]:
+    def get_state(self) -> VectorizedControllerState:
         """
         Retrieve the current internal state of the controller, which consists
         of the accumulated integral term and the previous error.
 
         Returns:
-            dict[str, torch.Tensor]: The current controller state.
+            VectorizedControllerState: The current controller state.
         """
-        return {
-            "integral": self.integral.clone(),
-            "prev_error": self.prev_error.clone(),
-        }
+        return VectorizedControllerState(
+            integral=self.integral.clone(), prev_error=self.prev_error.clone()
+        )
 
-    def load_state(self, state: dict[str, torch.Tensor]) -> None:
+    def load_state(self, state: VectorizedControllerState) -> None:
         """
-        Restore the controller's internal state from a given state dictionary.
+        Restore the controller's internal state from a given state.
 
         Args:
-            state (dict[str, torch.Tensor]): The state to which the controller
-                is restored.
+            state (VectorizedControllerState): The state to which the
+                controller is restored.
         """
-        self.integral = state["integral"]
-        self.prev_error = state["prev_error"]
+        self.integral = state.integral
+        self.prev_error = state.prev_error
