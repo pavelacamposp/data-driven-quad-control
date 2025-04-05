@@ -109,9 +109,9 @@ class EnvSimInfo:
     Used in controller evaluations for the following tasks:
     - Communicate drone state resets to the main process.
     - Track closed-loop simulation step progress. This allows sending dummy
-      values via multiprocessing queues to the main process in case of
-      interruptions, ensuring synchronized communication and preventing
-      deadlocks.
+      values to the main process and retrieving data from it via
+      multiprocessing queues in case of interruptions, ensuring synchronized
+      communication and preventing deadlocks.
     """
 
     reset_state: bool = False

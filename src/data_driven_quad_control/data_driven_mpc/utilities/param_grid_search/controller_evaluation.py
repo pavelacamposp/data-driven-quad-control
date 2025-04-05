@@ -123,8 +123,9 @@ def evaluate_dd_mpc_controller_combination(
     env_sim_info = EnvSimInfo()
 
     for run_index in range(required_successful_runs):
-        # Set env reset state to True to start a new run
+        # Reset env sim info data to start a new run
         env_sim_info.reset_state = True
+        env_sim_info.sim_step_progress = 0
 
         # Get drone's current position
         initial_drone_pos_tensor = initial_drone_state.base_pos
@@ -166,15 +167,18 @@ def evaluate_dd_mpc_controller_combination(
 
             has_failed = True
 
-            # Send dummy values to queues if environment simulation progress
-            # got interrupted to prevent deadlocks in the main process
+            # Send dummy values to and retrieve data from queues if the
+            # environment simulation was interrupted to prevent deadlocks and
+            # ensure synchronized communication with the main process
             N = combination_params.N
             m = fixed_params.m
             if env_sim_info.sim_step_progress == 0:
                 env_reset_queue.put((env_idx, False, False, N))
                 action_queue.put((env_idx, np.zeros(m)))
+                observation_queue.get()
             elif env_sim_info.sim_step_progress == 1:
                 action_queue.put((env_idx, np.zeros(m)))
+                observation_queue.get()
 
             # Calculate average RMSE of successful tests, if any
             average_RMSE = (
@@ -326,6 +330,9 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
     u_sys = np.zeros((num_steps, m))
     y_sys = np.zeros((num_steps, p))
     for t in range(0, num_steps, n_mpc_step):
+        # Reset sim step progress
+        env_sim_info.sim_step_progress = 0
+
         # Update and solve the Data-Driven MPC problem
         dd_mpc_controller.update_and_solve_data_driven_mpc()
 
