@@ -1,0 +1,4 @@
+git+https://github.com/pavelacamposp/direct_data_driven_mpc.git
+genesis_world==0.2.1
+numpy==2.2.4
+torch==2.6.0
