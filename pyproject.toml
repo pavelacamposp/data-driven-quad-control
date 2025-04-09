@@ -31,3 +31,29 @@ Homepage = "https://github.com/pavelacamposp/data_driven_quad_control.git"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.ruff]
+line-length = 79
+extend-exclude = ["__pycache__"]
+
+[tool.ruff.lint]
+extend-select = ["I", "D", "B", "C4", "E", "F", "W"]
+ignore = [
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D203",
+    "D212",
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+strict_optional = true
+warn_unused_ignores = true
+disable_error_code = ["type-arg"]
