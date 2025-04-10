@@ -4,7 +4,10 @@ import torch
 
 from src.envs.hover_env import HoverEnv
 
-def get_cfgs():
+CfgDict = dict[str, Any]
+
+
+def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
     env_cfg = {
         # simulation
         "dt": 0.01,  # sim freq = 100 Hz
@@ -59,13 +62,14 @@ def get_cfgs():
 
     return env_cfg, obs_cfg, reward_cfg, command_cfg
 
+
 def create_env(
     num_envs: int,
     env_cfg: Any,
     obs_cfg: Any,
     reward_cfg: Any,
     command_cfg: Any,
-    show_viewer: bool = False
+    show_viewer: bool = False,
 ) -> HoverEnv:
     env = HoverEnv(
         num_envs=num_envs,
@@ -74,50 +78,43 @@ def create_env(
         reward_cfg=reward_cfg,
         command_cfg=command_cfg,
         show_viewer=show_viewer,
-        auto_target_updates=False  # Disable automatic target position updates
+        auto_target_updates=False,  # Disable automatic target position updates
     )
-    
+
     return env
 
+
 def get_current_env_state(
-    env: HoverEnv,
-    env_idx: int
+    env: HoverEnv, env_idx: int
 ) -> dict[str, torch.Tensor]:
     # Convert env_idx int into a tensor list of env indices
-    envs_idx_tensor = get_tensor_from_env_idx(env=env,
-                                              env_idx=env_idx)
+    envs_idx_tensor = get_tensor_from_env_idx(env=env, env_idx=env_idx)
 
     return env.get_current_state(envs_idx=envs_idx_tensor)
 
+
 def restore_env_from_state(
-    env: HoverEnv,
-    env_idx: int,
-    saved_state: dict[str, torch.Tensor]
+    env: HoverEnv, env_idx: int, saved_state: dict[str, torch.Tensor]
 ) -> None:
-    envs_idx_tensor = get_tensor_from_env_idx(env=env,
-                                              env_idx=env_idx)
+    envs_idx_tensor = get_tensor_from_env_idx(env=env, env_idx=env_idx)
 
     # Set env state to `saved_state`
     env.restore_from_state(envs_idx=envs_idx_tensor, saved_state=saved_state)
 
+
 def update_env_target_pos(
-    env: HoverEnv,
-    env_idx: int,
-    target_pos: torch.Tensor
+    env: HoverEnv, env_idx: int, target_pos: torch.Tensor
 ) -> None:
-    envs_idx_tensor = get_tensor_from_env_idx(env=env,
-                                              env_idx=env_idx)
+    envs_idx_tensor = get_tensor_from_env_idx(env=env, env_idx=env_idx)
 
     # Set env target position to `target_pos`
     env.update_target_pos(envs_idx=envs_idx_tensor, target_pos=target_pos)
 
-def get_tensor_from_env_idx(
-    env: HoverEnv,
-    env_idx: int
-) -> torch.Tensor:
+
+def get_tensor_from_env_idx(env: HoverEnv, env_idx: int) -> torch.Tensor:
     # Convert env_idx int into a tensor list of env indices
-    envs_idx_tensor = torch.tensor([env_idx],
-                                    dtype=torch.long,
-                                    device=env.device)
-    
+    envs_idx_tensor = torch.tensor(
+        [env_idx], dtype=torch.long, device=env.device
+    )
+
     return envs_idx_tensor
