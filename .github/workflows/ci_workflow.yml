@@ -28,17 +28,23 @@ jobs:
             libxext6 \
             libxrender1
 
-      - name: Setup Python with Cache
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
-          cache-dependency-path: '**/requirements-dev.txt'
+
+      - name: Set up cache for installed packages
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements-ci.txt') }}
 
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install --default-timeout=100 --retries=5 -r requirements-dev.txt
+          pip install --default-timeout=100 --retries=5 -r requirements-ci.txt
 
       - name: Lint with ruff
         run: ruff check --output-format=github --line-length 79
@@ -55,11 +61,6 @@ jobs:
 
       - name: YAML Lint
         run: yamllint --strict .
-
-      - name: Uninstall OpenCV and install headless version for tests
-        run: |
-          pip uninstall -y opencv-python
-          pip install opencv-python-headless
 
       - name: Run tests with coverage
         run: |
