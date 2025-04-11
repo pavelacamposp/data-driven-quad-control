@@ -30,12 +30,13 @@ jobs:
 
       - name: Run mypy
         run: |
-          mypy . \
+          mypy \
           --ignore-missing-imports \
           --disallow-untyped-defs \
           --strict-optional \
           --warn-unused-ignores \
-          --disable-error-code type-arg .
+          --disable-error-code type-arg \
+          .
 
       - name: YAML Lint
         run: yamllint --strict --exclude .github/workflows .
