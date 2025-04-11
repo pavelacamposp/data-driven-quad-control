@@ -10,7 +10,7 @@ test_gs_initialized = False
 def initialize_genesis() -> None:
     global test_gs_initialized
     if not test_gs_initialized:
-        gs.init(backend=gs.gpu, logging_level="error")
+        gs.init(backend=gs.cpu, logging_level="error")
         test_gs_initialized = True
 
 
