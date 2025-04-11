@@ -1,6 +1,5 @@
 from typing import Any
 
-import genesis as gs
 import torch
 
 from src.envs.hover_env import HoverEnv
@@ -12,8 +11,7 @@ def test_hover_env_loop(
     dummy_reward_cfg: dict[str, Any],
     dummy_command_cfg: dict[str, Any],
 ) -> None:
-    # Initialize Genesis
-    gs.init(backend=gs.gpu, logging_level="warning")
+    # Note: Genesis initialized in `tests/conftest.py`
 
     # Initialize environment
     num_envs = 2

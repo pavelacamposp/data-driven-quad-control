@@ -1,6 +1,17 @@
 from typing import Any
 
+import genesis as gs
 import pytest
+
+test_gs_initialized = False
+
+
+@pytest.fixture(scope="session", autouse=True)
+def initialize_genesis() -> None:
+    global test_gs_initialized
+    if not test_gs_initialized:
+        gs.init(backend=gs.gpu, logging_level="error")
+        test_gs_initialized = True
 
 
 @pytest.fixture
