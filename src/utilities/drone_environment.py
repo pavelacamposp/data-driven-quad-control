@@ -70,6 +70,7 @@ def create_env(
     reward_cfg: Any,
     command_cfg: Any,
     show_viewer: bool = False,
+    device: torch.device | str = "cuda",
 ) -> HoverEnv:
     env = HoverEnv(
         num_envs=num_envs,
@@ -78,6 +79,7 @@ def create_env(
         reward_cfg=reward_cfg,
         command_cfg=command_cfg,
         show_viewer=show_viewer,
+        device=device,
         auto_target_updates=False,  # Disable automatic target position updates
     )
 

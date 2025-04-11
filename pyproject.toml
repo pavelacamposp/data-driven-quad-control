@@ -57,3 +57,10 @@ disallow_untyped_defs = true
 strict_optional = true
 warn_unused_ignores = true
 disable_error_code = ["type-arg"]
+
+[tool.coverage.run]
+# Ignore opencv-python created files
+omit = [
+  "config.py",
+  "config-3.py",
+]

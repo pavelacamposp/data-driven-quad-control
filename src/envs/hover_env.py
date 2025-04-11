@@ -40,7 +40,7 @@ class HoverEnv:
         reward_cfg: dict[str, Any],
         command_cfg: dict[str, Any],
         show_viewer: bool = False,
-        device: str = "cuda",
+        device: torch.device | str = "cuda",
         auto_target_updates: bool = True,
     ):
         self._is_closed = False  # Env closing status
