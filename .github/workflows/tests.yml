@@ -45,6 +45,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install --default-timeout=100 --retries=5 -r requirements-dev.txt
 
+      - name: Uninstall OpenCV and install headless version
+        run: |
+          pip uninstall -y opencv-python opencv-contrib-python
+          pip install opencv-python-headless
+
       - name: Run tests with coverage
         run: |
           coverage run -m pytest --maxfail=2 --disable-warnings tests/
