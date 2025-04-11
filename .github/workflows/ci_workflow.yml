@@ -66,11 +66,6 @@ jobs:
       - name: YAML Lint
         run: yamllint --strict .
 
-      - name: Uninstall OpenCV and install headless version for tests
-        run: |
-          pip uninstall -y opencv-python
-          pip install opencv-python-headless
-
       - name: Run tests with coverage
         run: |
           coverage run -m pytest --maxfail=2 --disable-warnings tests/
