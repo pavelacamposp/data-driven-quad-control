@@ -28,6 +28,7 @@ def test_hover_env_utilities(
         obs_cfg=dummy_obs_cfg,
         reward_cfg=dummy_reward_cfg,
         command_cfg=dummy_command_cfg,
+        device="cpu",
         show_viewer=False,
     )
 

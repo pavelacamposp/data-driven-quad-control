@@ -22,7 +22,7 @@ def test_hover_env_loop(
         reward_cfg=dummy_reward_cfg,
         command_cfg=dummy_command_cfg,
         show_viewer=False,
-        device="cuda",
+        device="cpu",
     )
 
     # Reset environment
