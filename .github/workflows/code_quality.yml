@@ -8,7 +8,7 @@ on:
     branches: ["main"]
 
 jobs:
-  build:
+  code_quality:
     runs-on: ubuntu-latest
     container: python:3.10-slim
     steps:

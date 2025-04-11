@@ -1,15 +1,17 @@
 ---
 name: Tests
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 on:
-  workflow_run:
-    workflows: ["Code Quality"]
-    types:
-      - completed
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  run_tests_if_successful_build:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
