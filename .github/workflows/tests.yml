@@ -37,7 +37,8 @@ jobs:
             build-essential \
             libgl1-mesa-glx \
             libsm6 \
-            libxext6
+            libxext6 \
+            libxrender1
 
       - name: Install dependencies
         run: |
