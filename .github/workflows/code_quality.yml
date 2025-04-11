@@ -39,4 +39,4 @@ jobs:
           .
 
       - name: YAML Lint
-        run: yamllint --strict --exclude .github/workflows .
+        run: yamllint --strict .
