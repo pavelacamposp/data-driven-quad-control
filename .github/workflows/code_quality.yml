@@ -1,5 +1,5 @@
 ---
-name: Code Quality
+name: CI Workflow
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     branches: ["main"]
 
 jobs:
-  code_quality:
+  ci_workflow:
     runs-on: ubuntu-latest
     container: python:3.10-slim
     steps:
@@ -18,7 +18,16 @@ jobs:
       - name: Install system dependencies
         run: |
           apt-get update
-          apt-get install -y git build-essential
+          apt-get install -y \
+            git \
+            build-essential \
+            libgl1-mesa-dev \
+            libgles2-mesa-dev \
+            libosmesa6-dev \
+            mesa-utils \
+            libsm6 \
+            libxext6 \
+            libxrender1
 
       - name: Install dependencies
         run: |
@@ -40,3 +49,13 @@ jobs:
 
       - name: YAML Lint
         run: yamllint --strict .
+
+      - name: Uninstall OpenCV and install headless version for tests
+        run: |
+          pip uninstall -y opencv-python
+          pip install opencv-python-headless
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest --maxfail=2 --disable-warnings tests/
+          coverage report
