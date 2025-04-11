@@ -10,15 +10,14 @@ on:
 jobs:
   ci_workflow:
     runs-on: ubuntu-latest
-    container: python:3.12-slim
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
-          apt-get update
-          apt-get install -y \
+          sudo apt-get update
+          sudo apt-get install -y \
             git \
             build-essential \
             libgl1-mesa-dev \
@@ -28,6 +27,13 @@ jobs:
             libsm6 \
             libxext6 \
             libxrender1
+
+      - name: Setup Python with Cache
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: '**/requirements-dev.txt'
 
       - name: Install dependencies
         run: |
