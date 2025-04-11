@@ -1,0 +1,64 @@
+from typing import Any
+
+import pytest
+
+
+@pytest.fixture
+def dummy_env_cfg() -> dict[str, Any]:
+    return {
+        "dt": 0.01,
+        "decimation": 4,
+        "num_actions": 4,
+        "simulate_action_latency": True,
+        "clip_actions": 1.0,
+        "termination_if_roll_greater_than": 180,  # degree
+        "termination_if_pitch_greater_than": 180,
+        "termination_if_close_to_ground": 0.1,
+        "termination_if_x_greater_than": 3.0,
+        "termination_if_y_greater_than": 3.0,
+        "termination_if_z_greater_than": 2.0,
+        "base_init_pos": [0.0, 0.0, 1.0],
+        "base_init_quat": [1.0, 0.0, 0.0, 0.0],
+        "episode_length_s": 15.0,
+        "at_target_threshold": 0.1,
+        "resampling_time_s": 3.0,
+        "visualize_target": False,
+        "visualize_camera": False,
+        "max_visualize_FPS": 100,
+    }
+
+
+@pytest.fixture
+def dummy_obs_cfg() -> dict[str, Any]:
+    return {
+        "num_obs": 17,
+        "obs_scales": {
+            "rel_pos": 1.0,
+            "lin_vel": 1.0,
+            "ang_vel": 1.0,
+        },
+    }
+
+
+@pytest.fixture
+def dummy_reward_cfg() -> dict[str, Any]:
+    return {
+        "yaw_lambda": -1.0,
+        "reward_scales": {
+            "target": 1.0,
+            "smooth": 1.0,
+            "yaw": 1.0,
+            "angular": 1.0,
+            "crash": 1.0,
+        },
+    }
+
+
+@pytest.fixture
+def dummy_command_cfg() -> dict[str, Any]:
+    return {
+        "num_commands": 3,
+        "pos_x_range": (-1.0, 1.0),
+        "pos_y_range": (-1.0, 1.0),
+        "pos_z_range": (0.5, 2.0),
+    }
