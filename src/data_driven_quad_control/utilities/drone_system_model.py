@@ -7,7 +7,7 @@ from direct_data_driven_mpc.utilities.models.nonlinear_model import (
     NonlinearSystem,
 )
 
-from src.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env import HoverEnv
 
 
 def drone_dynamics(

@@ -26,7 +26,7 @@ from genesis.utils.geom import (
     transform_quat_by_quat,
 )
 
-from src.utilities.math_utils import gs_rand_float
+from data_driven_quad_control.utilities.math_utils import gs_rand_float
 
 
 class HoverEnv:
