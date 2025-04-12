@@ -47,6 +47,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install --default-timeout=100 --retries=5 -r requirements-ci.txt
 
+      - name: Install project package
+        run: |
+          pip install .
+
       - name: Run tests with coverage
         run: |
           coverage run -m pytest --maxfail=2 --disable-warnings tests/
