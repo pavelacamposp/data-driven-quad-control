@@ -2,7 +2,7 @@ from typing import Any
 
 import torch
 
-from src.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env import HoverEnv
 
 
 def test_hover_env_loop(

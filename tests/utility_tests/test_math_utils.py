@@ -1,6 +1,9 @@
 import torch
 
-from src.utilities.math_utils import gs_rand_float, linear_interpolate
+from data_driven_quad_control.utilities.math_utils import (
+    gs_rand_float,
+    linear_interpolate,
+)
 
 
 def test_gs_rand_float() -> None:

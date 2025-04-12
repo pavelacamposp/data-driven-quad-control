@@ -3,13 +3,15 @@ from typing import Any
 import numpy as np
 import torch
 
-from src.utilities.drone_environment import (
+from data_driven_quad_control.utilities.drone_environment import (
     create_env,
     get_current_env_state,
     restore_env_from_state,
     update_env_target_pos,
 )
-from src.utilities.drone_system_model import create_system_model
+from data_driven_quad_control.utilities.drone_system_model import (
+    create_system_model,
+)
 
 
 def test_hover_env_utilities(
