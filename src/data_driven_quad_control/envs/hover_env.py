@@ -153,7 +153,9 @@ class HoverEnv:
                 camera_lookat=(0.0, 0.0, 1.0),
                 camera_fov=40,
             ),
-            vis_options=gs.options.VisOptions(n_rendered_envs=self.num_envs),
+            vis_options=gs.options.VisOptions(
+                rendered_envs_idx=list(range(self.num_envs))
+            ),
             rigid_options=gs.options.RigidOptions(
                 dt=self.dt,
                 constraint_solver=gs.constraint_solver.Newton,
