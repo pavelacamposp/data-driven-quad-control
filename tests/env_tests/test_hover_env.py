@@ -17,7 +17,7 @@ def test_hover_env_loop(
     # Initialize environment
     num_envs = 2
     env = HoverEnv(
-        num_envs=2,
+        num_envs=num_envs,
         env_cfg=dummy_env_cfg,
         obs_cfg=dummy_obs_cfg,
         reward_cfg=dummy_reward_cfg,
