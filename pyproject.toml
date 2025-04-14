@@ -12,7 +12,7 @@ description = "Data-driven control for drones in Genesis: data-driven MPC and re
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10.0"
 dependencies = [
-  "genesis_world >=0.2.1",
+  "genesis_world @ git+https://github.com/Genesis-Embodied-AI/Genesis",
   "numpy >=1.26.4",
   "torch >=2.6.0",
   "direct_data_driven_mpc @ git+https://github.com/pavelacamposp/direct_data_driven_mpc",
