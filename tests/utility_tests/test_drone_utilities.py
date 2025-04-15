@@ -1,8 +1,10 @@
+from dataclasses import asdict
 from typing import Any
 
 import numpy as np
 import torch
 
+from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
 from data_driven_quad_control.utilities.drone_environment import (
     create_env,
     get_current_env_state,
@@ -30,13 +32,14 @@ def test_hover_env_utilities(
         obs_cfg=dummy_obs_cfg,
         reward_cfg=dummy_reward_cfg,
         command_cfg=dummy_command_cfg,
-        device="cpu",
         show_viewer=False,
+        device="cpu",
+        action_type=EnvActionType.CTBR_FIXED_YAW,
     )
 
     # Reset environment
     obs, _ = env.reset()
-    assert obs.shape == (num_envs, dummy_obs_cfg["num_obs"])
+    assert obs.shape == (num_envs, env.num_obs)
 
     # Initialize drone system model
     base_env_idx = 0  # System model uses a specified env idx
@@ -78,12 +81,12 @@ def test_hover_env_utilities(
     )
 
     assert compare_dicts_str_tensor(
-        initial_base_env_state, restored_base_env_state
+        asdict(initial_base_env_state), asdict(restored_base_env_state)
     ), "Env states differ after restore."
 
 
 def compare_dicts_str_tensor(
-    dict_1: dict[str, torch.Tensor], dict_2: dict[str, torch.Tensor]
+    dict_1: dict[str, Any], dict_2: dict[str, Any]
 ) -> bool:
     if dict_1.keys() != dict_2.keys():
         return False
@@ -91,8 +94,13 @@ def compare_dicts_str_tensor(
     for key in dict_1:
         value_1, value_2 = dict_1[key], dict_2[key]
 
+        # Recursive call if nested dict
+        if isinstance(value_1, dict) and isinstance(value_2, dict):
+            if not compare_dicts_str_tensor(value_1, value_2):
+                return False
+
         # Check if tensor values are equal
-        if isinstance(value_1, torch.Tensor) and isinstance(
+        elif isinstance(value_1, torch.Tensor) and isinstance(
             value_2, torch.Tensor
         ):
             if not torch.equal(value_1, value_2):

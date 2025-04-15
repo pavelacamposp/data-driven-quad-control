@@ -54,7 +54,7 @@ jobs:
         run: ruff check --output-format=github --line-length 79
 
       - name: Run mypy
-        run: mypy .
+        run: mypy --install-types --non-interactive --ignore-missing-imports .
 
       - name: YAML Lint
         run: yamllint --strict .

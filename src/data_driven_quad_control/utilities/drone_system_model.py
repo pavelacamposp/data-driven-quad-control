@@ -7,6 +7,7 @@ from direct_data_driven_mpc.utilities.models.nonlinear_model import (
     NonlinearSystem,
 )
 
+from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
 from data_driven_quad_control.envs.hover_env import HoverEnv
 
 
@@ -44,7 +45,13 @@ def create_system_model(
     # Define system model (simulation)
     n = 3  # Number of system states (only necessary for storage
     # since the simulation is handled by the env)
-    m = 4  # Number of control inputs
+
+    # Number of control inputs
+    if env.action_type == EnvActionType.CTBR_FIXED_YAW:
+        m = 3
+    else:
+        m = 4
+
     p = 3  # Number of system outputs
     eps_max = 0.0  # Upper bound of the system measurement noise
     system_model = NonlinearSystem(
