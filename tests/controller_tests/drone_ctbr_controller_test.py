@@ -57,8 +57,9 @@ def run_hover_test(env: HoverEnv, tol: float = 0.1, steps: int = 10) -> None:
     )
 
     # Step environment
-    for _ in range(steps):
-        env.step(env_action)
+    with torch.no_grad():
+        for _ in range(steps):
+            env.step(env_action)
 
     # Check that the drone is hovering statically
     assert torch.all(torch.abs(env.base_ang_vel) < tol), "Hover control fails"
@@ -85,8 +86,9 @@ def run_body_rate_test(
     )
 
     # Step environment
-    for _ in range(steps):
-        env.step(env_action)
+    with torch.no_grad():
+        for _ in range(steps):
+            env.step(env_action)
 
     # Check that the drone angular velocity error is small
     assert torch.allclose(env.base_ang_vel, test_setpoint[:, 1:], atol=tol), (

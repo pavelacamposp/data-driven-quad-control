@@ -33,21 +33,22 @@ def test_hover_env_loop(
 
     # Step environment
     num_steps = 5
-    for _ in range(num_steps):
-        dummy_actions = torch.zeros(
-            (num_envs, env.num_actions),
-            dtype=torch.float,
-            device=env.device,
-        )
-        obs, _, reward, done, info = env.step(dummy_actions)
+    with torch.no_grad():
+        for _ in range(num_steps):
+            dummy_actions = torch.zeros(
+                (num_envs, env.num_actions),
+                dtype=torch.float,
+                device=env.device,
+            )
+            obs, _, reward, done, info = env.step(dummy_actions)
 
-        assert obs.shape == (num_envs, env.num_obs)
-        assert reward.shape == (num_envs,)
-        assert done.shape == (num_envs,)
-        assert isinstance(info, dict)
+            assert obs.shape == (num_envs, env.num_obs)
+            assert reward.shape == (num_envs,)
+            assert done.shape == (num_envs,)
+            assert isinstance(info, dict)
 
-        # Check that rewards do not contain NaNs
-        assert not torch.isnan(reward).any(), "Reward contains NaNs"
+            # Check that rewards do not contain NaNs
+            assert not torch.isnan(reward).any(), "Reward contains NaNs"
 
     # Sanity check reward keys
     for k in dummy_reward_cfg["reward_scales"].keys():

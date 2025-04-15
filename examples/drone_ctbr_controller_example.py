@@ -135,30 +135,32 @@ def main() -> None:
 
     # Simulate drone environment
     steps_per_command = num_steps // len(ctbr_env_action_list)
-    for step in range(num_steps):
-        # Calculate action idx for ctbr action selection
-        action_idx = step // steps_per_command
-        # Avoid out-of-bounds error
-        action_idx = min(action_idx, len(ctbr_env_action_list) - 1)
+    with torch.no_grad():
+        for step in range(num_steps):
+            # Calculate action idx for ctbr action selection
+            action_idx = step // steps_per_command
+            # Avoid out-of-bounds error
+            action_idx = min(action_idx, len(ctbr_env_action_list) - 1)
 
-        ctbr_env_action = ctbr_env_action_list[action_idx]
+            ctbr_env_action = ctbr_env_action_list[action_idx]
 
-        # Step simulation
-        env.step(ctbr_env_action)
+            # Step simulation
+            env.step(ctbr_env_action)
 
-        # Print control error for the env of idx 0 if verbose output is enabled
-        if verbose:
-            ctbr_measurement = torch.hstack(
-                [ctbr_env_action[0, 0], env.base_ang_vel[0, :]]
-            )
-            # Note: The total thrust is directly applied in the drone env,
-            # so we assume it immediately matches its setpoint
+            # Print control error for the env of idx 0
+            # if verbose output is enabled
+            if verbose:
+                ctbr_measurement = torch.hstack(
+                    [ctbr_env_action[0, 0], env.base_ang_vel[0, :]]
+                )
+                # Note: The total thrust is directly applied in the drone env,
+                # so we assume it immediately matches its setpoint
 
-            print_formatted_control_data(
-                setpoint=ctbr_env_action[0, :],
-                measurement=ctbr_measurement,
-                label="CTBR Controller",
-            )
+                print_formatted_control_data(
+                    setpoint=ctbr_env_action[0, :],
+                    measurement=ctbr_measurement,
+                    label="CTBR Controller",
+                )
 
 
 def print_formatted_control_data(

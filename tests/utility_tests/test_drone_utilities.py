@@ -66,9 +66,10 @@ def test_hover_env_utilities(
     U = np.zeros((num_steps, m))
     Y = np.zeros((num_steps, p))
     W = system_model.eps_max * np.random.uniform(-1.0, 1.0, (num_steps, p))
-    for k in range(num_steps):
-        # Simulate drone
-        Y[k, :] = system_model.simulate_step(u=U[k, :], w=W[k, :])
+    with torch.no_grad():
+        for k in range(num_steps):
+            # Simulate drone
+            Y[k, :] = system_model.simulate_step(u=U[k, :], w=W[k, :])
 
     # Restore env state
     restore_env_from_state(
