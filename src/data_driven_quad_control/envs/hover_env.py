@@ -10,9 +10,12 @@
 #     controller to support actions consisting of total thrust and body rates.
 #   - Implemented action decimation (number of simulation steps
 #     to take for each task step).
+#   - Added early termination when excessive linear or angular velocities are
+#     encountered to prevent numerical instabilities during simulation.
 #   - Implemented methods for saving and loading environment states.
 #   - Added parameter for disabling automatic target position (command)
 #     updates.
+#   - Updated environment for compatibility with `rsl_rl_lib` v2.3.1.
 
 import math
 from typing import Any
@@ -69,7 +72,6 @@ class HoverEnv:
         self.num_envs = num_envs
         self.action_type = action_type
         self.num_obs = EnvActionType.get_num_obs(self.action_type)
-        self.num_privileged_obs = None
         self.num_actions = EnvActionType.get_num_actions(self.action_type)
 
         # Create CTBR controller if the action type is CTBR or CTBR_FIXED_YAW
@@ -263,6 +265,7 @@ class HoverEnv:
         self.last_base_pos = torch.zeros_like(self.base_pos)
 
         self.extras: dict[str, Any] = {}  # extra information for logging
+        self.extras["observations"] = {}
 
         # Enable automatic target updates (commands)
         # If True, target positions are updated when reached.
@@ -301,7 +304,7 @@ class HoverEnv:
 
     def step(
         self, actions: torch.Tensor
-    ) -> tuple[torch.Tensor, None, torch.Tensor, torch.Tensor, dict[str, Any]]:
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, dict[str, Any]]:
         self.actions = torch.clip(
             actions,
             -self.env_cfg["clip_actions"],
@@ -370,7 +373,9 @@ class HoverEnv:
             transform_quat_by_quat(
                 torch.ones_like(self.base_quat) * self.inv_base_init_quat,
                 self.base_quat,
-            )
+            ),
+            rpy=True,
+            degrees=True,
         )
         inv_base_quat = inv_quat(self.base_quat)
         self.base_lin_vel[:] = transform_by_quat(
@@ -411,6 +416,20 @@ class HoverEnv:
                 self.base_pos[:, 2]
                 < self.env_cfg["termination_if_close_to_ground"]
             )
+            | (
+                torch.any(
+                    torch.abs(self.base_ang_vel)
+                    > self.env_cfg["termination_if_ang_vel_greater_than"],
+                    dim=1,
+                )
+            )
+            | (
+                torch.any(
+                    torch.abs(self.base_lin_vel)
+                    > self.env_cfg["termination_if_lin_vel_greater_than"],
+                    dim=1,
+                )
+            )
         )
         self.reset_buf = (
             self.episode_length_buf > self.max_episode_length
@@ -450,8 +469,8 @@ class HoverEnv:
 
         self.last_actions[:] = self.actions[:]
 
-        # Return obs, privileged_obs, rewards, dones, infos
-        return self.obs_buf, None, self.rew_buf, self.reset_buf, self.extras
+        # Return obs, rewards, dones, infos
+        return self.obs_buf, self.rew_buf, self.reset_buf, self.extras
 
     def close(self) -> None:
         if not self._is_closed:
@@ -500,8 +519,8 @@ class HoverEnv:
 
         self._resample_commands(envs_idx)
 
-    def get_observations(self) -> torch.Tensor:
-        return self.obs_buf
+    def get_observations(self) -> tuple[torch.Tensor, dict[str, Any]]:
+        return self.obs_buf, self.extras
 
     # ------------ target position update ------------
     def update_target_pos(

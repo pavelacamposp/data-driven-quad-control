@@ -2,6 +2,7 @@ opencv-python-headless==4.11.0.86
 git+https://github.com/Genesis-Embodied-AI/Genesis.git
 numpy==1.26.4
 torch==2.6.0
+rsl-rl-lib==2.3.1
 git+https://github.com/pavelacamposp/direct_data_driven_mpc.git
 ruff==0.11.5
 mypy==1.15.0

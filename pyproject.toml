@@ -15,6 +15,8 @@ dependencies = [
   "genesis_world @ git+https://github.com/Genesis-Embodied-AI/Genesis",
   "numpy >=1.26.4",
   "torch >=2.6.0",
+  "rsl-rl-lib >= 2.3.1",
+  "tensorboard",
   "direct_data_driven_mpc @ git+https://github.com/pavelacamposp/direct_data_driven_mpc",
 ]
 license = "MIT AND Apache-2.0"

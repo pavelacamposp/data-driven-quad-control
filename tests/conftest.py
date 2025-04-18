@@ -27,6 +27,8 @@ def dummy_env_cfg() -> dict[str, Any]:
         "termination_if_x_greater_than": 3.0,
         "termination_if_y_greater_than": 3.0,
         "termination_if_z_greater_than": 2.0,
+        "termination_if_ang_vel_greater_than": 12,
+        "termination_if_lin_vel_greater_than": 20,
         "base_init_pos": [0.0, 0.0, 1.0],
         "base_init_quat": [1.0, 0.0, 0.0, 0.0],
         "episode_length_s": 15.0,
