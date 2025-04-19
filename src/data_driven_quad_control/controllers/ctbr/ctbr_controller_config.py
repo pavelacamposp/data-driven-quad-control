@@ -6,5 +6,5 @@ class CTBRControllerParams(TypedDict):
     pid_coefficients: list[list[float]]
 
 
-class ControllerConfig(TypedDict):
+class CTBRControllerConfig(TypedDict):
     ctbr_controller_params: CTBRControllerParams

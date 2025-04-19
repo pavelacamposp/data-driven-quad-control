@@ -15,7 +15,7 @@ from data_driven_quad_control.controllers.ctbr.ctbr_controller import (
     DroneCTBRController,
 )
 from data_driven_quad_control.controllers.ctbr.ctbr_controller_config import (
-    ControllerConfig,
+    CTBRControllerConfig,
 )
 from data_driven_quad_control.drone_config.drone_params import (
     DroneConfig,
@@ -66,7 +66,7 @@ def main() -> None:
         },
     }
 
-    controller_config: ControllerConfig = {
+    controller_config: CTBRControllerConfig = {
         "ctbr_controller_params": {
             "dt": 0.04,  # 25 Hz
             "pid_coefficients": [

@@ -8,7 +8,7 @@ from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedPIDController,
 )
 
-from .ctbr_controller_config import ControllerConfig
+from .ctbr_controller_config import CTBRControllerConfig
 
 
 class DroneCTBRController:
@@ -24,7 +24,7 @@ class DroneCTBRController:
     def __init__(
         self,
         drone_config: DroneConfig,
-        controller_config: ControllerConfig,
+        controller_config: CTBRControllerConfig,
         num_envs: int,
         device: torch.device | str = "cuda",
     ):
@@ -33,7 +33,7 @@ class DroneCTBRController:
 
         Args:
             drone_config (DroneConfig): The drone configuration parameters.
-            controller_config (ControllerConfig): The CTBR controller-specific
+            controller_config (CTBRControllerConfig): The CTBR controller
                 configuration parameters.
             num_envs (int): The number of drone environments the controller is
                 used in (i.e., the number of drones simulated in a vectorized
