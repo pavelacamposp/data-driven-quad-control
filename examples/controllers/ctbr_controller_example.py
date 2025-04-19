@@ -16,6 +16,8 @@ from data_driven_quad_control.controllers.ctbr.ctbr_controller import (
 )
 from data_driven_quad_control.controllers.ctbr.ctbr_controller_config import (
     ControllerConfig,
+)
+from data_driven_quad_control.drone_config.drone_params import (
     DroneConfig,
 )
 from data_driven_quad_control.utilities.vectorized_pid_controller import (

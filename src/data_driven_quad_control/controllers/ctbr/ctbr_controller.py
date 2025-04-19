@@ -1,11 +1,14 @@
 import torch
 
+from data_driven_quad_control.drone_config.drone_params import (
+    DroneConfig,
+)
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
     VectorizedPIDController,
 )
 
-from .ctbr_controller_config import ControllerConfig, DroneConfig
+from .ctbr_controller_config import ControllerConfig
 
 
 class DroneCTBRController:
