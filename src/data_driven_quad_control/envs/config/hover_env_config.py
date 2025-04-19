@@ -12,10 +12,10 @@ from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
 )
 
-# Config file paths for CTBR controller parameters
+# Config file paths for drone and CTBR controller parameters
 DRONE_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
-    "../../controllers/ctbr/config/cf2x_drone_params.yaml",
+    "../../drone_config/config/cf2x_drone_params.yaml",
 )
 
 CTBR_CONFIG_PATH = os.path.join(
