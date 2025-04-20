@@ -84,6 +84,29 @@ def yaw_from_quaternion(quats: torch.Tensor) -> torch.Tensor:
     return yaw
 
 
+def yaw_to_quaternion(yaw: torch.Tensor) -> torch.Tensor:
+    """
+    Convert yaw angles to quaternions in a (w, x, y, z) format assuming zero
+    roll and pitch values.
+
+    Note:
+        This function assumes Tait-Bryan angles, applied in ZYX order.
+
+    Args:
+        yaw (torch.Tensor): Tensor of shape (...) containing yaw angles in
+            radians.
+
+    Returns:
+        torch.Tensor: Tensor of shape (..., 4) containing quaternions in a
+            (w, x, y, z) format.
+    """
+    quat = torch.zeros((yaw.shape[0], 4), device=yaw.device, dtype=yaw.dtype)
+    quat[:, 0] = torch.cos(yaw / 2)  # w
+    quat[:, 3] = torch.sin(yaw / 2)  # z
+
+    return quat
+
+
 if __name__ == "__main__":
     quats = torch.tensor(
         [
@@ -99,3 +122,9 @@ if __name__ == "__main__":
     yaw_vals = yaw_from_quaternion(quats)
 
     print(yaw_vals)
+
+    yaw_tensor = torch.tensor([90.0], dtype=torch.float)
+    yaw_tensor = torch.deg2rad(yaw_tensor)
+
+    quat = yaw_to_quaternion(yaw_tensor)
+    print(quat)
