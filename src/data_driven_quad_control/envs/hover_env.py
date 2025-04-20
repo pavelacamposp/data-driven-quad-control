@@ -82,10 +82,10 @@ class HoverEnv:
 
         if self.uses_ctbr_actions:
             # Load drone and controller parameters for CTBR controller init
-            drone_config = EnvCTBRControllerConfig.get_drone_config()
+            drone_params = EnvCTBRControllerConfig.get_drone_params()
             controller_config = EnvCTBRControllerConfig.get_controller_config()
             self.ctbr_controller = DroneCTBRController(
-                drone_config=drone_config,
+                drone_params=drone_params,
                 controller_config=controller_config,
                 num_envs=self.num_envs,
                 device=self.device,

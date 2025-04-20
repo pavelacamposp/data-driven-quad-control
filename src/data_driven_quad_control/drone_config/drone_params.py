@@ -23,6 +23,6 @@ class DroneRotorParams(TypedDict):
     rotor_spin_directions: list[int]
 
 
-class DroneConfig(TypedDict):
-    drone_params: DronePhysicalParams
+class DroneParams(TypedDict):
+    drone_physical_params: DronePhysicalParams
     drone_rotor_params: DroneRotorParams

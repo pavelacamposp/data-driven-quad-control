@@ -8,17 +8,18 @@ from typing import Any, Optional
 import torch
 import yaml
 
+from data_driven_quad_control.drone_config.drone_params import DroneParams
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
 )
 
 # Config file paths for drone and CTBR controller parameters
-DRONE_CONFIG_PATH = os.path.join(
+DRONE_PARAMS_PATH = os.path.join(
     os.path.dirname(__file__),
     "../../drone_config/config/cf2x_drone_params.yaml",
 )
 
-CTBR_CONFIG_PATH = os.path.join(
+CTBR_CONTROLLER_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
     "../../controllers/ctbr/config/ctbr_controller_params.yaml",
 )
@@ -89,10 +90,24 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
     return env_cfg, obs_cfg, reward_cfg, command_cfg
 
 
-# Define drone-related parameters
-class EnvDrone:
-    MASS = 0.027
-    WEIGHT = MASS * 9.81
+# Define drone physical and rotor parameters
+class EnvDroneParams:
+    # Load drone parameters from YAML file
+    _params: DroneParams = load_yaml_config(DRONE_PARAMS_PATH)
+
+    # Retrieve drone config parameters
+    _DRONE_PHYSICAL_PARAMS = _params["drone_physical_params"]
+    _DRONE_ROTOR_PARAMS = _params["drone_rotor_params"]
+
+    MASS = _DRONE_PHYSICAL_PARAMS["mass"]
+    WEIGHT = MASS * 9.81  # Define weight from mass [N]
+    INERTIA = _DRONE_PHYSICAL_PARAMS["inertia"]
+
+    KF = _DRONE_ROTOR_PARAMS["kf"]
+    KM = _DRONE_ROTOR_PARAMS["km"]
+    ARM_LENGTH = _DRONE_ROTOR_PARAMS["arm_length"]
+    ROTOR_ANGLES_DEG = _DRONE_ROTOR_PARAMS["rotor_angles_deg"]
+    ROTOR_SPIN_DIRECTIONS = _DRONE_ROTOR_PARAMS["rotor_spin_directions"]
 
 
 # Define types of environment actions
@@ -153,19 +168,19 @@ class EnvActionBounds:
     MAX_RPM = 1.8 * BASE_RPM
 
     # Collective Thrust and Body Rates bounds
-    MAX_THRUST = 2 * EnvDrone.WEIGHT  # Max total thrust force [N]
+    MAX_THRUST = 2 * EnvDroneParams.WEIGHT  # Max total thrust force [N]
     MAX_ANG_VELS = [15.0, 15.0, 10.0]  # Max roll, pitch, yaw ang vels [rad/s]
 
 
 # Load CTBR controller configuration for env CTBR controller initialization
 class EnvCTBRControllerConfig:
     @staticmethod
-    def get_drone_config() -> Any:
-        return load_yaml_config(path=DRONE_CONFIG_PATH)
+    def get_drone_params() -> Any:
+        return load_yaml_config(path=DRONE_PARAMS_PATH)
 
     @staticmethod
     def get_controller_config() -> Any:
-        return load_yaml_config(path=CTBR_CONFIG_PATH)
+        return load_yaml_config(path=CTBR_CONTROLLER_CONFIG_PATH)
 
 
 # Drone environment state for saving and loading

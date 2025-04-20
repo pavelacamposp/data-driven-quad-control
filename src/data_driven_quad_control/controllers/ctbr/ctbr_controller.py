@@ -1,7 +1,7 @@
 import torch
 
 from data_driven_quad_control.drone_config.drone_params import (
-    DroneConfig,
+    DroneParams,
 )
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
@@ -23,7 +23,7 @@ class DroneCTBRController:
 
     def __init__(
         self,
-        drone_config: DroneConfig,
+        drone_params: DroneParams,
         controller_config: CTBRControllerConfig,
         num_envs: int,
         device: torch.device | str = "cuda",
@@ -32,7 +32,7 @@ class DroneCTBRController:
         Initialize the CTBR controller.
 
         Args:
-            drone_config (DroneConfig): The drone configuration parameters.
+            drone_params (DroneParams): The drone configuration parameters.
             controller_config (CTBRControllerConfig): The CTBR controller
                 configuration parameters.
             num_envs (int): The number of drone environments the controller is
@@ -44,12 +44,12 @@ class DroneCTBRController:
         self.device = device
 
         # Retrieve drone and controller parameters
-        drone_params = drone_config["drone_params"]
-        drone_rotor_params = drone_config["drone_rotor_params"]
+        drone_physical_params = drone_params["drone_physical_params"]
+        drone_rotor_params = drone_params["drone_rotor_params"]
         controller_params = controller_config["ctbr_controller_params"]
 
         # Drone parameters
-        self.inertia = drone_params["inertia"]
+        self.inertia = drone_physical_params["inertia"]
         # Force coefficient
         self.KF = torch.as_tensor(
             drone_rotor_params["kf"], dtype=torch.float, device=self.device

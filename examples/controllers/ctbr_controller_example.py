@@ -18,7 +18,7 @@ from data_driven_quad_control.controllers.ctbr.ctbr_controller_config import (
     CTBRControllerConfig,
 )
 from data_driven_quad_control.drone_config.drone_params import (
-    DroneConfig,
+    DroneParams,
 )
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
@@ -44,9 +44,9 @@ def main() -> None:
     args = parse_args()
     num_envs = args.num_envs
 
-    # Define controller and drone configurations
-    drone_config: DroneConfig = {
-        "drone_params": {
+    # Define drone parameters and CTBR controller configuration
+    drone_params: DroneParams = {
+        "drone_physical_params": {
             "mass": 0.027,
             "inertia": {
                 "Jxx": 1.4e-5,
@@ -80,7 +80,7 @@ def main() -> None:
     # Initialize `DroneCTBRController`
     device = "cuda"
     controller = DroneCTBRController(
-        drone_config=drone_config,
+        drone_params=drone_params,
         controller_config=controller_config,
         num_envs=num_envs,
         device=device,
@@ -97,7 +97,7 @@ def main() -> None:
     ).expand(num_envs, -1)
 
     # Mock thrust setpoints
-    drone_mass = drone_config["drone_params"]["mass"]
+    drone_mass = drone_params["drone_physical_params"]["mass"]
     thrust_setpoints = torch.tensor(
         [drone_mass * 9.81] * num_envs, device=device
     )
