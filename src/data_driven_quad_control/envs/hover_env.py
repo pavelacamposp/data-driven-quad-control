@@ -38,6 +38,7 @@ from data_driven_quad_control.envs.config.hover_env_config import (
     EnvActionBounds,
     EnvActionType,
     EnvCTBRControllerConfig,
+    EnvDroneParams,
     EnvState,
 )
 from data_driven_quad_control.utilities.math_utils import (
@@ -81,9 +82,8 @@ class HoverEnv:
         )
 
         if self.uses_ctbr_actions:
-            # Load drone and controller parameters for CTBR controller init
-            drone_params = EnvCTBRControllerConfig.get_drone_params()
-            controller_config = EnvCTBRControllerConfig.get_controller_config()
+            drone_params = EnvDroneParams.get()
+            controller_config = EnvCTBRControllerConfig.get()
             self.ctbr_controller = DroneCTBRController(
                 drone_params=drone_params,
                 controller_config=controller_config,

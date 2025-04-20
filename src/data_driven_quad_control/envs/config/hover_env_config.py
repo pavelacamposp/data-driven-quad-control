@@ -8,6 +8,9 @@ from typing import Any, Optional
 import torch
 import yaml
 
+from data_driven_quad_control.controllers.ctbr.ctbr_controller_config import (
+    CTBRControllerConfig,
+)
 from data_driven_quad_control.drone_config.drone_params import DroneParams
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
@@ -109,6 +112,10 @@ class EnvDroneParams:
     ROTOR_ANGLES_DEG = _DRONE_ROTOR_PARAMS["rotor_angles_deg"]
     ROTOR_SPIN_DIRECTIONS = _DRONE_ROTOR_PARAMS["rotor_spin_directions"]
 
+    @classmethod
+    def get(cls) -> DroneParams:
+        return cls._params
+
 
 # Define types of environment actions
 class EnvActionType(Enum):
@@ -172,15 +179,19 @@ class EnvActionBounds:
     MAX_ANG_VELS = [15.0, 15.0, 10.0]  # Max roll, pitch, yaw ang vels [rad/s]
 
 
-# Load CTBR controller configuration for env CTBR controller initialization
+# Define CTBR controller configuration parameters
 class EnvCTBRControllerConfig:
-    @staticmethod
-    def get_drone_params() -> Any:
-        return load_yaml_config(path=DRONE_PARAMS_PATH)
+    # Load CTBR controller configuration from YAML file
+    _config: CTBRControllerConfig = load_yaml_config(
+        CTBR_CONTROLLER_CONFIG_PATH,
+    )
 
-    @staticmethod
-    def get_controller_config() -> Any:
-        return load_yaml_config(path=CTBR_CONTROLLER_CONFIG_PATH)
+    DT = _config["ctbr_controller_params"]["dt"]
+    PID_COEFFS = _config["ctbr_controller_params"]["pid_coefficients"]
+
+    @classmethod
+    def get(cls) -> CTBRControllerConfig:
+        return cls._config
 
 
 # Drone environment state for saving and loading
