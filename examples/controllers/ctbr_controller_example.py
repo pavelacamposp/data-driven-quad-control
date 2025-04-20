@@ -69,7 +69,7 @@ def main() -> None:
     controller_config: CTBRControllerConfig = {
         "ctbr_controller_params": {
             "dt": 0.04,  # 25 Hz
-            "pid_coefficients": [
+            "rate_pid_gains": [
                 [1.0, 0.1, 1.0],  # Roll rate
                 [1.0, 0.1, 1.0],  # Pitch rate
                 [1.0, 0.1, 1.0],  # Yaw rate

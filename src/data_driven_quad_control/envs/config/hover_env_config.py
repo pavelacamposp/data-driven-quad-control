@@ -187,7 +187,7 @@ class EnvCTBRControllerConfig:
     )
 
     DT = _config["ctbr_controller_params"]["dt"]
-    PID_COEFFS = _config["ctbr_controller_params"]["pid_coefficients"]
+    RATE_PID_GAINS = _config["ctbr_controller_params"]["rate_pid_gains"]
 
     @classmethod
     def get(cls) -> CTBRControllerConfig:

@@ -100,7 +100,7 @@ class DroneCTBRController:
         # Controller parameters
         self.dt = controller_params["dt"]
         self.rate_pid_params = torch.as_tensor(
-            controller_params["pid_coefficients"],
+            controller_params["rate_pid_gains"],
             dtype=torch.float,
             device=self.device,
         )
