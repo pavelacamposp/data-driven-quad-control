@@ -48,8 +48,6 @@ from data_driven_quad_control.utilities.math_utils import (
 
 
 class HoverEnv:
-    BASE_RPM = 14468.429183500699  # Propeller RPMs for hovering
-
     def __init__(
         self,
         num_envs: int,
