@@ -89,8 +89,8 @@ class HoverEnv:
                 device=self.device,
             )
 
-        # Pre-allocate a full-sized rates_setpoints tensor
-        self.rates_setpoints = torch.zeros(
+        # Pre-allocate a tensor for CTBR controller body rate setpoints
+        self.body_rate_setpoints = torch.zeros(
             (self.num_envs, 3), dtype=torch.float, device=self.device
         )
 
@@ -328,17 +328,17 @@ class HoverEnv:
             )
 
             if self.action_type == EnvActionType.CTBR:
-                # Assign w_x, w_y, w_z body rates to rates setpoints
-                self.rates_setpoints[:, :] = ctbr_action[:, 1:]
+                # Assign w_x, w_y, w_z body rates to rate setpoints
+                self.body_rate_setpoints[:, :] = ctbr_action[:, 1:]
             else:
-                # Only assign w_x, and w_y body rates to rates setpoints,
+                # Only assign w_x, and w_y body rates to rate setpoints,
                 # while leaving w_z as 0 from initialization
-                self.rates_setpoints[:, :2] = ctbr_action[:, 1:]
+                self.body_rate_setpoints[:, :2] = ctbr_action[:, 1:]
 
             # Compute rotor RPMs from CTBR controller
             rotor_RPMs = self.ctbr_controller.compute(
                 rate_measurements=self.base_ang_vel,
-                rate_setpoints=self.rates_setpoints,
+                rate_setpoints=self.body_rate_setpoints,
                 thrust_setpoints=ctbr_action[:, 0],
             )
 
