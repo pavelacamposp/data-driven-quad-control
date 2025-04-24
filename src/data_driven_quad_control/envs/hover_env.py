@@ -527,7 +527,7 @@ class HoverEnv:
             self.target.set_pos(
                 self.commands[envs_idx],
                 zero_velocity=True,
-                envs_idx=[envs_idx],
+                envs_idx=envs_idx,
             )
 
     # ------------ save/load state ------------
