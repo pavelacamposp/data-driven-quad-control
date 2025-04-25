@@ -31,6 +31,7 @@ class DroneTrackingController:
         self,
         drone_mass: float,
         controller_config: TrackingControllerConfig,
+        dt: float,
         num_envs: int,
         device: torch.device | str = "cuda",
     ):
@@ -41,6 +42,7 @@ class DroneTrackingController:
             drone_mass (float): The drone mass.
             controller_config (TrackingControllerConfig): The tracking
                 controller configuration parameters.
+            dt (float): The controller time step in seconds.
             num_envs (int): The number of drone environments the controller is
                 used in (i.e., the number of drones simulated in a vectorized
                 environment).
@@ -50,8 +52,8 @@ class DroneTrackingController:
         self.num_envs = num_envs
 
         # Controller parameters
+        self.dt = dt
         controller_params = controller_config["tracking_controller_params"]
-        self.dt = controller_params["dt"]
         self.pos_pid_params = torch.as_tensor(
             controller_params["pos_pid_gains"],
             dtype=torch.float,

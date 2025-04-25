@@ -2,8 +2,6 @@
 # Parameters for a drone tracking controller
 
 tracking_controller_params:
-  dt: 0.04  # Controller frequency 25 Hz [s]
-
   # P, I, D gains for position controllers
   pos_pid_gains:
     - [2.0, 0.0, 2.2]  # X-axis

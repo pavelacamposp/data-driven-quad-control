@@ -25,6 +25,7 @@ class DroneCTBRController:
         self,
         drone_params: DroneParams,
         controller_config: CTBRControllerConfig,
+        dt: float,
         num_envs: int,
         device: torch.device | str = "cuda",
     ):
@@ -35,6 +36,7 @@ class DroneCTBRController:
             drone_params (DroneParams): The drone configuration parameters.
             controller_config (CTBRControllerConfig): The CTBR controller
                 configuration parameters.
+            dt (float): The controller time step in seconds.
             num_envs (int): The number of drone environments the controller is
                 used in (i.e., the number of drones simulated in a vectorized
                 environment).
@@ -98,7 +100,7 @@ class DroneCTBRController:
         )
 
         # Controller parameters
-        self.dt = controller_params["dt"]
+        self.dt = dt
         self.rate_pid_params = torch.as_tensor(
             controller_params["rate_pid_gains"],
             dtype=torch.float,

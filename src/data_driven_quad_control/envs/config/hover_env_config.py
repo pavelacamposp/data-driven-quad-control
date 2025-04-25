@@ -186,7 +186,6 @@ class EnvCTBRControllerConfig:
         CTBR_CONTROLLER_CONFIG_PATH,
     )
 
-    DT = _config["ctbr_controller_params"]["dt"]
     RATE_PID_GAINS = _config["ctbr_controller_params"]["rate_pid_gains"]
 
     @classmethod

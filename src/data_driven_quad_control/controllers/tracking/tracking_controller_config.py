@@ -5,7 +5,6 @@ import torch
 
 
 class TrackingControllerParams(TypedDict):
-    dt: float
     pos_pid_gains: list[list[float]]
     kR: float
 

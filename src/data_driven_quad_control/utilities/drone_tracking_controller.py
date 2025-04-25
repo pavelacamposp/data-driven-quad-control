@@ -45,6 +45,7 @@ def create_drone_tracking_controller(env: HoverEnv) -> DroneTrackingController:
     controller = DroneTrackingController(
         drone_mass=EnvDroneParams.MASS,
         controller_config=tracking_controller_config,
+        dt=env.step_dt,
         num_envs=env.num_envs,
         device=env.device,
     )

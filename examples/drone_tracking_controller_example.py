@@ -132,6 +132,7 @@ def main() -> None:
         ctbr_controller = DroneCTBRController(
             drone_params=drone_params,
             controller_config=controller_config,
+            dt=env.step_dt,
             num_envs=num_envs,
             device=env.device,
         )

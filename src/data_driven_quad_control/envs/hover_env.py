@@ -85,6 +85,7 @@ class HoverEnv:
             self.ctbr_controller = DroneCTBRController(
                 drone_params=drone_params,
                 controller_config=controller_config,
+                dt=self.step_dt,
                 num_envs=self.num_envs,
                 device=self.device,
             )

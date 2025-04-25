@@ -65,10 +65,8 @@ def main() -> None:
             "rotor_spin_directions": [-1, 1, -1, 1],
         },
     }
-
     controller_config: CTBRControllerConfig = {
         "ctbr_controller_params": {
-            "dt": 0.04,  # 25 Hz
             "rate_pid_gains": [
                 [1.0, 0.1, 1.0],  # Roll rate
                 [1.0, 0.1, 1.0],  # Pitch rate
@@ -76,12 +74,14 @@ def main() -> None:
             ],
         }
     }
+    dt = 0.04  # Controller frequency 25 Hz [s]
 
     # Initialize `DroneCTBRController`
     device = "cuda"
     controller = DroneCTBRController(
         drone_params=drone_params,
         controller_config=controller_config,
+        dt=dt,
         num_envs=num_envs,
         device=device,
     )

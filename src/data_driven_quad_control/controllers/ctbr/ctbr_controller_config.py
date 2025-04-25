@@ -2,7 +2,6 @@ from typing import TypedDict
 
 
 class CTBRControllerParams(TypedDict):
-    dt: float
     rate_pid_gains: list[list[float]]
 
 
