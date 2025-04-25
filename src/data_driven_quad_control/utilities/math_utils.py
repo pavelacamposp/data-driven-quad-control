@@ -105,26 +105,3 @@ def yaw_to_quaternion(yaw: torch.Tensor) -> torch.Tensor:
     quat[:, 3] = torch.sin(yaw / 2)  # z
 
     return quat
-
-
-if __name__ == "__main__":
-    quats = torch.tensor(
-        [
-            [0.7071, 0.0000, 0.0000, 0.7071],  # r: 0°, p: 0°, y: 90°
-            [0.9239, 0.3827, 0.0000, 0.0000],  # r: 45°, p: 0°, y: 0°
-            [0.0000, 0.0000, 0.3827, 0.9239],  # r: 45°, p: 0°, y: 180°
-            [0.099, -0.2391, 0.3696, 0.8924],  # r: 45°, p: 30°, y: 180°
-        ],
-        dtype=torch.float,
-    )
-
-    rotation_matrices = quaternion_to_matrix(quats)
-    yaw_vals = yaw_from_quaternion(quats)
-
-    print(yaw_vals)
-
-    yaw_tensor = torch.tensor([90.0], dtype=torch.float)
-    yaw_tensor = torch.deg2rad(yaw_tensor)
-
-    quat = yaw_to_quaternion(yaw_tensor)
-    print(quat)
