@@ -1,6 +1,7 @@
 from typing import Any
 
 import torch
+from torch.testing import assert_close
 
 from data_driven_quad_control.envs.config.hover_env_config import (
     EnvActionType,
@@ -91,6 +92,10 @@ def run_body_rate_test(
             env.step(env_action)
 
     # Check that the drone angular velocity error is small
-    assert torch.allclose(env.base_ang_vel, test_setpoint[:, 1:], atol=tol), (
-        "Angular velocity tracking fails"
+    assert_close(
+        env.base_ang_vel,
+        test_setpoint[:, 1:],
+        rtol=0.0,
+        atol=tol,
+        msg="Angular velocity tracking fails",
     )

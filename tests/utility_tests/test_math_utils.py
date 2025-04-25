@@ -1,4 +1,5 @@
 import torch
+from torch.testing import assert_close
 
 from data_driven_quad_control.utilities.math_utils import (
     gs_rand_float,
@@ -30,7 +31,7 @@ def test_linear_interpolate_float_bounds() -> None:
     result = linear_interpolate(x, x_min, x_max, y_min, y_max)
     expected = torch.tensor([10.0, 15.0, 20.0])
 
-    assert torch.allclose(result, expected)
+    assert_close(result, expected)
 
 
 def test_linear_interpolate_tensor_bounds() -> None:
@@ -43,4 +44,4 @@ def test_linear_interpolate_tensor_bounds() -> None:
     result = linear_interpolate(x, x_min, x_max, y_min, y_max)
     expected = torch.tensor([125.0, 350.0])
 
-    assert torch.allclose(result, expected)
+    assert_close(result, expected)
