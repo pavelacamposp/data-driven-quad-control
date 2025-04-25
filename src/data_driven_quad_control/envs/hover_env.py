@@ -38,6 +38,7 @@ from data_driven_quad_control.envs.config.hover_env_config import (
     EnvActionBounds,
     EnvActionType,
     EnvCTBRControllerConfig,
+    EnvDroneParams,
     EnvState,
 )
 from data_driven_quad_control.utilities.math_utils import (
@@ -47,8 +48,6 @@ from data_driven_quad_control.utilities.math_utils import (
 
 
 class HoverEnv:
-    BASE_RPM = 14468.429183500699  # Propeller RPMs for hovering
-
     def __init__(
         self,
         num_envs: int,
@@ -81,18 +80,18 @@ class HoverEnv:
         )
 
         if self.uses_ctbr_actions:
-            # Load drone and controller parameters for CTBR controller init
-            drone_config = EnvCTBRControllerConfig.get_drone_config()
-            controller_config = EnvCTBRControllerConfig.get_controller_config()
+            drone_params = EnvDroneParams.get()
+            controller_config = EnvCTBRControllerConfig.get()
             self.ctbr_controller = DroneCTBRController(
-                drone_config=drone_config,
+                drone_params=drone_params,
                 controller_config=controller_config,
+                dt=self.step_dt,
                 num_envs=self.num_envs,
                 device=self.device,
             )
 
-        # Pre-allocate a full-sized rates_setpoints tensor
-        self.rates_setpoints = torch.zeros(
+        # Pre-allocate a tensor for CTBR controller body rate setpoints
+        self.body_rate_setpoints = torch.zeros(
             (self.num_envs, 3), dtype=torch.float, device=self.device
         )
 
@@ -315,51 +314,48 @@ class HoverEnv:
             self.last_actions if self.simulate_action_latency else self.actions
         )
 
+        # Compute rotor RPMs from actions
+        if self.action_type in (
+            EnvActionType.CTBR,
+            EnvActionType.CTBR_FIXED_YAW,
+        ):
+            # Calculate thrust and rate setpoints from actions
+            ctbr_action = linear_interpolate(
+                x=exec_actions,
+                x_min=-1,
+                x_max=1,
+                y_min=self.action_bounds[:, 0],
+                y_max=self.action_bounds[:, 1],
+            )
+
+            if self.action_type == EnvActionType.CTBR:
+                # Assign w_x, w_y, w_z body rates to rate setpoints
+                self.body_rate_setpoints[:, :] = ctbr_action[:, 1:]
+            else:
+                # Only assign w_x, and w_y body rates to rate setpoints,
+                # while leaving w_z as 0 from initialization
+                self.body_rate_setpoints[:, :2] = ctbr_action[:, 1:]
+
+            # Compute rotor RPMs from CTBR controller
+            rotor_RPMs = self.ctbr_controller.compute(
+                rate_measurements=self.base_ang_vel,
+                rate_setpoints=self.body_rate_setpoints,
+                thrust_setpoints=ctbr_action[:, 0],
+            )
+
+        else:
+            # Calculate rotor RPMs directly from actions
+            rotor_RPMs = linear_interpolate(
+                x=exec_actions,
+                x_min=-1,
+                x_max=1,
+                y_min=self.action_bounds[:, 0],
+                y_max=self.action_bounds[:, 1],
+            )
+
         # perform physics stepping
         for _ in range(self.decimation):
-            if self.action_type in (
-                EnvActionType.CTBR,
-                EnvActionType.CTBR_FIXED_YAW,
-            ):
-                # Calculate thrust and rate setpoints from actions
-                ctbr_action = linear_interpolate(
-                    x=exec_actions,
-                    x_min=-1,
-                    x_max=1,
-                    y_min=self.action_bounds[:, 0],
-                    y_max=self.action_bounds[:, 1],
-                )
-
-                if self.action_type == EnvActionType.CTBR:
-                    # Assign w_x, w_y, w_z body rates to rates setpoints
-                    self.rates_setpoints[:, :] = ctbr_action[:, 1:]
-                else:
-                    # Only assign w_x, and w_y body rates to rates
-                    # setpoints, while leaving w_z as 0 from initialization
-                    self.rates_setpoints[:, :2] = ctbr_action[:, 1:]
-
-                # Compute rotor RPMs from CTBR controller
-                controller_rpms = self.ctbr_controller.compute(
-                    rate_measurements=self.base_ang_vel,
-                    rate_setpoints=self.rates_setpoints,
-                    thrust_setpoints=ctbr_action[:, 0],
-                )
-
-                # Set drone propeller RPMs
-                self.drone.set_propellels_rpm(controller_rpms)
-            else:
-                # Calculate rotor RPMs from actions
-                rotor_RPMs = linear_interpolate(
-                    x=exec_actions,
-                    x_min=-1,
-                    x_max=1,
-                    y_min=self.action_bounds[:, 0],
-                    y_max=self.action_bounds[:, 1],
-                )
-
-                # Set drone propeller RPMs
-                self.drone.set_propellels_rpm(rotor_RPMs)
-
+            self.drone.set_propellels_rpm(rotor_RPMs)
             self.scene.step()
 
         # update buffers
@@ -532,7 +528,7 @@ class HoverEnv:
             self.target.set_pos(
                 self.commands[envs_idx],
                 zero_velocity=True,
-                envs_idx=[envs_idx],
+                envs_idx=envs_idx,
             )
 
     # ------------ save/load state ------------

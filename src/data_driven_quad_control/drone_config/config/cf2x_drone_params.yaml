@@ -7,7 +7,7 @@
 # License: Apache License 2.0 (See `LICENSE-APACHE` for details)
 
 # Drone physical parameters
-drone_params:
+drone_physical_params:
   mass: 0.027  # [kg]
   inertia:  # [kg*m^2]
     Jxx: 1.4e-5

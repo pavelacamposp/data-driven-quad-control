@@ -51,7 +51,9 @@ def restore_env_from_state(
 
 
 def update_env_target_pos(
-    env: HoverEnv, env_idx: int, target_pos: torch.Tensor
+    env: HoverEnv,
+    env_idx: int | list[int] | tuple[int, ...] | torch.Tensor,
+    target_pos: torch.Tensor,
 ) -> None:
     envs_idx_tensor = get_tensor_from_env_idx(env=env, env_idx=env_idx)
 
@@ -59,10 +61,16 @@ def update_env_target_pos(
     env.update_target_pos(envs_idx=envs_idx_tensor, target_pos=target_pos)
 
 
-def get_tensor_from_env_idx(env: HoverEnv, env_idx: int) -> torch.Tensor:
-    # Convert env_idx int into a tensor list of env indices
-    envs_idx_tensor = torch.tensor(
-        [env_idx], dtype=torch.long, device=env.device
-    )
-
-    return envs_idx_tensor
+def get_tensor_from_env_idx(
+    env: HoverEnv,
+    env_idx: int | list[int] | tuple[int, ...] | torch.Tensor,
+) -> torch.Tensor:
+    # Convert env_idx into a 1D tensor of env indices
+    if isinstance(env_idx, int):
+        return torch.tensor([env_idx], dtype=torch.long, device=env.device)
+    elif isinstance(env_idx, (list, tuple)):
+        return torch.tensor(env_idx, dtype=torch.long, device=env.device)
+    elif isinstance(env_idx, torch.Tensor):
+        return env_idx.to(dtype=torch.long, device=env.device)
+    else:
+        raise TypeError(f"Unsupported env_idx type: {type(env_idx)}")

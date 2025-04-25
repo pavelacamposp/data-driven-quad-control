@@ -1,37 +1,9 @@
 from typing import TypedDict
 
 
-class DroneInertia(TypedDict):
-    Jxx: float
-    Jxy: float
-    Jxz: float
-    Jyy: float
-    Jyz: float
-    Jzz: float
-
-
-class DronePhysicalParams(TypedDict):
-    mass: float
-    inertia: DroneInertia
-
-
-class DroneRotorParams(TypedDict):
-    kf: float
-    km: float
-    arm_length: float
-    rotor_angles_deg: list[float]
-    rotor_spin_directions: list[int]
-
-
-class DroneConfig(TypedDict):
-    drone_params: DronePhysicalParams
-    drone_rotor_params: DroneRotorParams
-
-
 class CTBRControllerParams(TypedDict):
-    dt: float
-    pid_coefficients: list[list[float]]
+    rate_pid_gains: list[list[float]]
 
 
-class ControllerConfig(TypedDict):
+class CTBRControllerConfig(TypedDict):
     ctbr_controller_params: CTBRControllerParams

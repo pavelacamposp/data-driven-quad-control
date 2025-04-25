@@ -15,7 +15,7 @@ import torch
 from data_driven_quad_control.envs.config.hover_env_config import (
     EnvActionBounds,
     EnvActionType,
-    EnvDrone,
+    EnvDroneParams,
     get_cfgs,
 )
 from data_driven_quad_control.envs.hover_env import HoverEnv
@@ -87,21 +87,26 @@ def main() -> None:
     #    Yaw rate [rad/s]]
     ctbr_setpoints_list = [
         # Positive Yaw rate
-        [EnvDrone.WEIGHT, 0.0, 0.0, 5.0],
+        [EnvDroneParams.WEIGHT, 0.0, 0.0, 5.0],
         # Ascend with negative Yaw rate
-        [EnvDrone.WEIGHT + 0.01, 0.0, 0.0, -5.0],
+        [EnvDroneParams.WEIGHT + 0.01, 0.0, 0.0, -5.0],
         # Descend with max Yaw rate
-        [EnvDrone.WEIGHT - 0.01, 0.0, 0.0, EnvActionBounds.MAX_ANG_VELS[2]],
+        [
+            EnvDroneParams.WEIGHT - 0.01,
+            0.0,
+            0.0,
+            EnvActionBounds.MAX_ANG_VELS[2],
+        ],
         # Hover
-        [EnvDrone.WEIGHT, 0.0, 0.0, 0.0],
+        [EnvDroneParams.WEIGHT, 0.0, 0.0, 0.0],
         # Positive Roll rate
-        [EnvDrone.WEIGHT, 0.01, 0.0, 0.0],
+        [EnvDroneParams.WEIGHT, 0.01, 0.0, 0.0],
         # Negative Roll rate
-        [EnvDrone.WEIGHT, -0.01, 0.0, 0.0],
+        [EnvDroneParams.WEIGHT, -0.01, 0.0, 0.0],
         # Positive Pitch rate
-        [EnvDrone.WEIGHT, 0.0, 0.01, 0.0],
+        [EnvDroneParams.WEIGHT, 0.0, 0.01, 0.0],
         # Negative Pitch rate
-        [EnvDrone.WEIGHT, 0.0, -0.01, 0.0],
+        [EnvDroneParams.WEIGHT, 0.0, -0.01, 0.0],
     ]
 
     # Calculate env actions from setpoints

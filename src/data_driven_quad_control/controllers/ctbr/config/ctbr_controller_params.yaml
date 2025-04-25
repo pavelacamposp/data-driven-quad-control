@@ -2,8 +2,8 @@
 # Parameters for a Collective Thrust and Body Rates (CTBR) controller
 
 ctbr_controller_params:
-  dt: 0.04  # Controller frequency 25 Hz [s]
-  pid_coefficients:  # P, I, D coefficients for each rate controller
+  # P, I, D gains for rate controllers
+  rate_pid_gains:
     - [10.0, 0.0, 0.1]  # Roll rate
     - [10.0, 0.0, 0.1]  # Pitch rate
     - [10.0, 0.0, 0.1]  # Yaw rate

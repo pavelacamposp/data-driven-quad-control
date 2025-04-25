@@ -1,10 +1,11 @@
 from typing import Any
 
 import torch
+from torch.testing import assert_close
 
 from data_driven_quad_control.envs.config.hover_env_config import (
     EnvActionType,
-    EnvDrone,
+    EnvDroneParams,
 )
 from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.utilities.math_utils import linear_interpolate
@@ -42,7 +43,7 @@ def run_hover_test(env: HoverEnv, tol: float = 0.1, steps: int = 10) -> None:
     """Test if drone hovers stably with gravity compensation thrust."""
     # Hover setpoint with only gravity compensation
     hover_setpoint = torch.tensor(
-        [[EnvDrone.WEIGHT, 0.0, 0.0, 0.0]],
+        [[EnvDroneParams.WEIGHT, 0.0, 0.0, 0.0]],
         dtype=torch.float,
         device=env.device,
     ).expand(env.num_envs, -1)
@@ -71,7 +72,7 @@ def run_body_rate_test(
     """Test if drone correctly tracks a roll/pitch/yaw rate setpoint."""
     # Body rates setpoint with only gravity compensation
     test_setpoint = torch.tensor(
-        [[EnvDrone.WEIGHT, 0.01, -0.01, 1.0]],
+        [[EnvDroneParams.WEIGHT, 0.01, -0.01, 1.0]],
         dtype=torch.float,
         device=env.device,
     ).expand(env.num_envs, -1)
@@ -91,6 +92,10 @@ def run_body_rate_test(
             env.step(env_action)
 
     # Check that the drone angular velocity error is small
-    assert torch.allclose(env.base_ang_vel, test_setpoint[:, 1:], atol=tol), (
-        "Angular velocity tracking fails"
+    assert_close(
+        env.base_ang_vel,
+        test_setpoint[:, 1:],
+        rtol=0.0,
+        atol=tol,
+        msg="Angular velocity tracking fails",
     )

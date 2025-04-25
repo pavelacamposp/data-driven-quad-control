@@ -1,0 +1,12 @@
+---
+# Parameters for a drone tracking controller
+
+tracking_controller_params:
+  # P, I, D gains for position controllers
+  pos_pid_gains:
+    - [2.0, 0.0, 2.2]  # X-axis
+    - [2.0, 0.0, 2.2]  # Y-axis
+    - [18.0, 0.0, 6.0]  # Z-axis
+
+  # Proportional constant for computing body rates from orientation error
+  kR: 5.0

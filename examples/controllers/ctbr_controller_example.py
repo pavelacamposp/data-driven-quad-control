@@ -15,8 +15,10 @@ from data_driven_quad_control.controllers.ctbr.ctbr_controller import (
     DroneCTBRController,
 )
 from data_driven_quad_control.controllers.ctbr.ctbr_controller_config import (
-    ControllerConfig,
-    DroneConfig,
+    CTBRControllerConfig,
+)
+from data_driven_quad_control.drone_config.drone_params import (
+    DroneParams,
 )
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
@@ -42,9 +44,9 @@ def main() -> None:
     args = parse_args()
     num_envs = args.num_envs
 
-    # Define controller and drone configurations
-    drone_config: DroneConfig = {
-        "drone_params": {
+    # Define drone parameters and CTBR controller configuration
+    drone_params: DroneParams = {
+        "drone_physical_params": {
             "mass": 0.027,
             "inertia": {
                 "Jxx": 1.4e-5,
@@ -63,23 +65,23 @@ def main() -> None:
             "rotor_spin_directions": [-1, 1, -1, 1],
         },
     }
-
-    controller_config: ControllerConfig = {
+    controller_config: CTBRControllerConfig = {
         "ctbr_controller_params": {
-            "dt": 0.04,  # 25 Hz
-            "pid_coefficients": [
+            "rate_pid_gains": [
                 [1.0, 0.1, 1.0],  # Roll rate
                 [1.0, 0.1, 1.0],  # Pitch rate
                 [1.0, 0.1, 1.0],  # Yaw rate
             ],
         }
     }
+    dt = 0.04  # Controller frequency 25 Hz [s]
 
     # Initialize `DroneCTBRController`
     device = "cuda"
     controller = DroneCTBRController(
-        drone_config=drone_config,
+        drone_params=drone_params,
         controller_config=controller_config,
+        dt=dt,
         num_envs=num_envs,
         device=device,
     )
@@ -95,7 +97,7 @@ def main() -> None:
     ).expand(num_envs, -1)
 
     # Mock thrust setpoints
-    drone_mass = drone_config["drone_params"]["mass"]
+    drone_mass = drone_params["drone_physical_params"]["mass"]
     thrust_setpoints = torch.tensor(
         [drone_mass * 9.81] * num_envs, device=device
     )
