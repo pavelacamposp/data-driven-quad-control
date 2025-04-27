@@ -10,9 +10,6 @@ nonlinear data-driven MPC controllers. It is designed to work with the
 import numpy as np
 import torch
 import yaml
-from direct_data_driven_mpc.utilities.controller.controller_params import (
-    NonlinearDataDrivenMPCParams,
-)
 from direct_data_driven_mpc.utilities.models.nonlinear_model import (
     NonlinearSystem,
 )
@@ -34,13 +31,18 @@ from data_driven_quad_control.utilities.math_utils import (
 
 def collect_initial_input_output_data(
     env: HoverEnv,
-    drone_system_model: NonlinearSystem,
     base_env_idx: int,
-    dd_mpc_config: NonlinearDataDrivenMPCParams,
     stabilizing_controller: DroneTrackingController,
     target_pos: torch.Tensor,
     target_yaw: torch.Tensor,
+    input_bounds: np.ndarray,
+    u_range: np.ndarray,
+    N: int,
+    m: int,
+    p: int,
     np_random: Generator,
+    eps_max: float = 0.0,
+    drone_system_model: NonlinearSystem | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Collect initial input-output data from a single drone in a vectorized
@@ -57,13 +59,15 @@ def collect_initial_input_output_data(
 
     Args:
         env (HoverEnv): The vectorized drone environment.
-        drone_system_model (NonlinearSystem): The drone nonlinear system. It is
-            a wrapper around the environment to interface with the
-            `direct-data-driven-mpc` package.
         base_env_idx (int): The environment instance (drone) index used for
             data collection.
-        dd_mpc_config (NonlinearDataDrivenMPCParams): A dictionary containing
-            parameters for configuring a nonlinear data-driven MPC controller.
+        input_bounds (np.ndarray): The bounds for the predicted input in a
+            nonlinear data-driven MPC controller, with shape (`m`, 2).
+        u_range (np.ndarray): The range of the persistently exciting input,
+            with shape (`m`, 2).
+        N (int): The length of the input-output trajectory.
+        m (int): The number of control inputs.
+        p (int): The number of drone system outputs.
         stabilizing_controller (DroneTrackingController): A drone tracking
             controller used for stabilizing the drone during data collection.
         target_pos (torch.Tensor): The target position for stabilization, with
@@ -73,6 +77,12 @@ def collect_initial_input_output_data(
         np_random (Generator): A Numpy random number generator for generating
             the persistently exciting input and random noise for the system's
             output.
+        eps_max (float): The upper bound of the system measurement noise. Used
+            when the `drone_system_model` is provided. Defaults to 0.0.
+        drone_system_model (NonlinearSystem | None): Optional drone nonlinear
+            system. It is a wrapper around the environment to interface with
+            the `direct-data-driven-mpc` package. If not provided, the drone
+            environment is stepped directly.
 
     Returns:
         tuple[np.ndarray, np.ndarray]: A tuple containing two arrays: a
@@ -81,21 +91,20 @@ def collect_initial_input_output_data(
             `(N, p)`, where `N` is the trajectory length, `m` is the number of
             control inputs, and `p` is the number of drone system outputs.
     """
-    # Retrieve model parameters
-    m = drone_system_model.m  # Number of control inputs
-    p = drone_system_model.p  # Number of system outputs
-    eps_max = drone_system_model.eps_max  # Upper bound of the system
-    # measurement noise
+    # Determine whether a drone system model will be used or
+    # the drone environment will be stepped directly
+    use_system_model = drone_system_model is not None
 
-    # Retrieve Data-Driven MPC controller parameters
-    input_bounds = dd_mpc_config["U"]  # Predicted input bounds
-    u_range = dd_mpc_config["u_range"]  # Persistently exciting input range
-    N = dd_mpc_config["N"]  # Initial input-output trajectory length
-
-    # Calculate target quaternion from target yaw
-    target_quat = yaw_to_quaternion(target_yaw)
+    if drone_system_model is not None:
+        assert m == drone_system_model.m, (
+            "Mismatch between provided `m` and `drone_system_model.m`"
+        )
+        assert p == drone_system_model.p, (
+            "Mismatch between provided `p` and `drone_system_model.p`"
+        )
 
     # Define target drone state
+    target_quat = yaw_to_quaternion(target_yaw)
     target_state = TrackingCtrlDroneState(X=target_pos, Q=target_quat)
 
     # Initialize current drone state
@@ -165,9 +174,18 @@ def collect_initial_input_output_data(
             actions_buffer[base_env_idx] = env_action
 
             # Step environment
-            y_N[k, :] = drone_system_model.simulate_step(
-                u=u_N[k, :], w=w_N[k, :]
-            )
+            if use_system_model:
+                # Prevent mypy [union-attr] error
+                assert drone_system_model is not None
+
+                y_N[k, :] = drone_system_model.simulate_step(
+                    u=u_N[k, :], w=w_N[k, :]
+                )
+            else:
+                env.step(actions_buffer)
+
+                # Get system output (drone position)
+                y_N[k, :] = env.base_pos[base_env_idx].cpu().numpy()
 
     return u_N, y_N
 

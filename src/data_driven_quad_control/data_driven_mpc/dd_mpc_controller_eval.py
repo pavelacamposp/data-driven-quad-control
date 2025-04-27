@@ -246,13 +246,18 @@ def main() -> None:
 
     u_N, y_N = collect_initial_input_output_data(
         env=env,
-        drone_system_model=system_model,
         base_env_idx=base_env_idx,
-        dd_mpc_config=dd_mpc_config,
         stabilizing_controller=stabilizing_controller,
         target_pos=target_pos,
         target_yaw=target_yaw,
+        input_bounds=dd_mpc_config["U"],
+        u_range=dd_mpc_config["u_range"],
+        N=dd_mpc_config["N"],
+        m=system_model.m,
+        p=system_model.p,
+        eps_max=system_model.eps_max,
         np_random=np_random,
+        drone_system_model=system_model,
     )
 
     # Evaluate data-driven MPC controller in simulation
