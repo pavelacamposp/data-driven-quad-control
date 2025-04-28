@@ -23,8 +23,8 @@ license = "MIT AND Apache-2.0"
 license-files = ["LICEN[CS]E*"]
 keywords = ["drone", "control-systems", "data-driven", "reinforcement-learning"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
 ]
 
 [project.urls]
@@ -40,20 +40,20 @@ extend-exclude = ["__pycache__"]
 [tool.ruff.lint]
 extend-select = ["I", "D", "B", "C4", "E", "F", "W"]
 ignore = [
-    "D100",
-    "D101",
-    "D102",
-    "D103",
-    "D104",
-    "D105",
-    "D106",
-    "D107",
-    "D203",
-    "D205",
-    "D212",
-    "D400",
-    "D413",
-    "D415",
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "D105",
+  "D106",
+  "D107",
+  "D203",
+  "D205",
+  "D212",
+  "D400",
+  "D413",
+  "D415",
 ]
 
 [tool.mypy]
