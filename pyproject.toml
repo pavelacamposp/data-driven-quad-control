@@ -57,11 +57,11 @@ ignore = [
 ]
 
 [tool.mypy]
+install_types = true
+non_interactive = true
 ignore_missing_imports = true
 disallow_untyped_defs = true
-strict_optional = true
 warn_unused_ignores = true
-disable_error_code = ["type-arg"]
 
 [tool.coverage.run]
 # Ignore opencv-python created files
