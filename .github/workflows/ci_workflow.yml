@@ -67,5 +67,5 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          coverage run -m pytest --maxfail=2 --disable-warnings tests/
+          coverage run -m pytest --maxfail=2 --disable-warnings
           coverage report
