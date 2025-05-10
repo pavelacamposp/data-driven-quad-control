@@ -1,0 +1,30 @@
+---
+controller_key:
+  init_hover_pos: [0.0, 0.0, 1.0]
+  n: 2
+  N: 40
+  L: 5
+  Q_weights: [1, 1, 1]
+  R_weights: [1, 1, 1]
+  S_weights: [1, 1, 1]
+  lambda_alpha: 10
+  lambda_sigma: 1000
+  U:
+    - [0, 1]
+    - [-0.5, 0.5]
+    - [-0.5, 0.5]
+  Us:
+    - [0.1, 0.9]
+    - [-0.4, 0.4]
+    - [-0.4, 0.4]
+  u_range:
+    - [-0.1, 0.1]
+    - [-0.1, 0.1]
+    - [-0.1, 0.1]
+  alpha_reg_type: 0
+  lamb_alpha_s: 10
+  lamb_sigma_s: 1000
+  y_r: [1.0, 1.0, 1.0]
+  ext_out_incr_in: false
+  update_cost_threshold: null
+  n_n_mpc_step: false

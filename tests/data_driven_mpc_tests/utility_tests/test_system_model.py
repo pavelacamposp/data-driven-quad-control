@@ -48,5 +48,6 @@ def test_system_model(
             # Simulate drone
             Y[k, :] = system_model.simulate_step(u=U[k, :], w=W[k, :])
 
+    # Verify that the system output contains expected values
     assert not np.allclose(Y, 0.0), "All outputs are zero"
     assert np.all(np.isfinite(Y)), "Outputs contain NaNs or Infs"
