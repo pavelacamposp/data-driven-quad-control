@@ -14,6 +14,7 @@ from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_
     DDMPCCombinationParams,
     DDMPCEvaluationParams,
     DDMPCFixedParams,
+    EnvResetSignal,
 )
 from data_driven_quad_control.envs.config.hover_env_config import EnvState
 from data_driven_quad_control.envs.hover_env import HoverEnv
@@ -48,7 +49,7 @@ def test_parallel_grid_search(
         # Mock controller closed-loop simulation
         # Send reset signal to reset the drone environment
         # for the `process_id` env index
-        env_reset_queue.put((process_id, True, False, N))
+        env_reset_queue.put(EnvResetSignal(process_id, True, False, N))
 
         # Send dummy action and get dummy observation
         # (mock controller simulation)
@@ -56,7 +57,7 @@ def test_parallel_grid_search(
         observation_queue.get()
 
         # Send reset signal to continue env stepping
-        env_reset_queue.put((process_id, False, False, N))
+        env_reset_queue.put(EnvResetSignal(process_id, False, False, N))
 
         # Send dummy action and get dummy observation
         # (mock controller simulation)
@@ -68,7 +69,7 @@ def test_parallel_grid_search(
         failed_result.append({"success": False})
 
         # Send reset signal signaling worker task completion
-        env_reset_queue.put((process_id, False, True, None))
+        env_reset_queue.put(EnvResetSignal(process_id, False, True, None))
 
     mock_worker.side_effect = dummy_worker
 

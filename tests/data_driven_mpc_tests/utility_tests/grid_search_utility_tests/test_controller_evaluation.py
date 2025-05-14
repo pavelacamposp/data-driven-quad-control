@@ -14,6 +14,7 @@ from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_
     DDMPCCombinationParams,
     DDMPCEvaluationParams,
     DDMPCFixedParams,
+    EnvResetSignal,
 )
 from data_driven_quad_control.envs.config.hover_env_config import EnvState
 
@@ -194,11 +195,11 @@ def test_sim_nonlinear_dd_mpc_control_loop_parallel(
     assert rmse >= 0
 
     # Verify reset queue data
-    received_env_idx, reset, done, N = dummy_env_reset_queue.get()
-    assert received_env_idx == env_idx
-    assert isinstance(reset, bool)
-    assert isinstance(done, bool)
-    assert N == dummy_controller.N
+    reset_signal: EnvResetSignal = dummy_env_reset_queue.get()
+    assert reset_signal.env_idx == env_idx
+    assert isinstance(reset_signal.reset, bool)
+    assert isinstance(reset_signal.done, bool)
+    assert reset_signal.N == dummy_controller.N
 
     # Verify action queue data
     received_env_idx, action = dummy_action_queue.get()

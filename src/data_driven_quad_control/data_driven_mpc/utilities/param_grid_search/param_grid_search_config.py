@@ -123,3 +123,23 @@ class CtrlEvalStatus(Enum):
 
     SUCCESS = 0
     FAILURE = 1
+
+
+class EnvResetSignal(NamedTuple):
+    """
+    Message object used for communicating environment reset and termination
+    signals between worker processes and the main process during controller
+    parameter evaluations in a grid search.
+
+    Attributes:
+        env_idx (int): The index of the environment instance (worker).
+        reset (bool): Indicates whether the environment should be reset.
+        done (bool): Indicates whether the worker has finished all evaluations.
+        N (int | None): The input-output trajectory length associated with the
+            evaluation. Not required when signaling task completion.
+    """
+
+    env_idx: int
+    reset: bool
+    done: bool
+    N: int | None

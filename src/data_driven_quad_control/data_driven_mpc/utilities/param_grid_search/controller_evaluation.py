@@ -28,6 +28,7 @@ from .param_grid_search_config import (
     DDMPCCombinationParams,
     DDMPCEvaluationParams,
     DDMPCFixedParams,
+    EnvResetSignal,
     EnvSimInfo,
 )
 from .resource_usage_logging import (
@@ -173,7 +174,11 @@ def evaluate_dd_mpc_controller_combination(
             N = combination_params.N
             m = fixed_params.m
             if env_sim_info.sim_step_progress == 0:
-                env_reset_queue.put((env_idx, False, False, N))
+                env_reset_queue.put(
+                    EnvResetSignal(
+                        env_idx=env_idx, reset=False, done=False, N=N
+                    )
+                )
                 action_queue.put((env_idx, np.zeros(m)))
                 observation_queue.get()
             elif env_sim_info.sim_step_progress == 1:
@@ -342,7 +347,14 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
             env_sim_info.sim_step_progress = 0
 
             # Send env reset signal back to the main process
-            env_reset_queue.put((env_idx, env_sim_info.reset_state, False, N))
+            env_reset_queue.put(
+                EnvResetSignal(
+                    env_idx=env_idx,
+                    reset=env_sim_info.reset_state,
+                    done=False,
+                    N=N,
+                )
+            )
             # Set env reset status to False
             env_sim_info.reset_state = False
             # Advance step progress

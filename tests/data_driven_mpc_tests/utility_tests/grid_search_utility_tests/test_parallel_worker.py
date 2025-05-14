@@ -14,6 +14,7 @@ from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_
     DDMPCCombinationParams,
     DDMPCEvaluationParams,
     DDMPCFixedParams,
+    EnvResetSignal,
 )
 
 EVALUATE_DD_MPC_CONTROLLER_PATCH_PATH = (
@@ -90,7 +91,7 @@ def test_worker_data_driven_mpc(
 
     # Verify process sent a task completion signal through the env reset queue
     reset_signal = dummy_env_reset_queue.get()
-    assert reset_signal == (process_id, False, True, None), (
+    assert reset_signal == EnvResetSignal(process_id, False, True, None), (
         "Worker sent wrong reset signal"
     )
 
@@ -143,6 +144,6 @@ def test_worker_data_driven_mpc_exits_on_empty_queue(
 
     # Verify that a reset signal was correctly sent
     reset_signal = dummy_env_reset_queue.get()
-    assert reset_signal == (process_id, False, True, None), (
+    assert reset_signal == EnvResetSignal(process_id, False, True, None), (
         "Worker sent wrong reset signal on empty queue"
     )

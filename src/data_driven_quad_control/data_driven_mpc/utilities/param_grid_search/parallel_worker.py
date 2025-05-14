@@ -28,6 +28,7 @@ from .param_grid_search_config import (
     DDMPCCombinationParams,
     DDMPCEvaluationParams,
     DDMPCFixedParams,
+    EnvResetSignal,
 )
 
 # Retrieve main process logger
@@ -168,6 +169,8 @@ def worker_data_driven_mpc(
             progress.value += 1
 
     # Signal task completion to main process
-    env_reset_queue.put((process_id, False, True, None))
+    env_reset_queue.put(
+        EnvResetSignal(env_idx=process_id, reset=False, done=True, N=None)
+    )
 
     logger.info(f"[Worker] ----- Process {process_id} finished -----")

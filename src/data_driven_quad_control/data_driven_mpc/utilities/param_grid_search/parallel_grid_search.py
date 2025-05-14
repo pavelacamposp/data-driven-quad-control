@@ -38,6 +38,7 @@ from .param_grid_search_config import (
     DDMPCCombinationParams,
     DDMPCEvaluationParams,
     DDMPCFixedParams,
+    EnvResetSignal,
 )
 from .resource_usage_logging import (
     log_system_resources,
@@ -184,29 +185,33 @@ def parallel_grid_search(
             logger.info("[MAIN] Reached env reset point")
 
             for _ in range(active_processes):
-                env_idx, reset, done, N = env_reset_queue.get()
+                reset_signal: EnvResetSignal = env_reset_queue.get()
 
                 # Handle done environment
-                if done:
+                if reset_signal.done:
                     done_processes += 1  # Increment finished process count
                     active_processes -= 1  # Decrement active process count
 
-                    logger.info(f"[MAIN] Process {env_idx} finished")
+                    logger.info(
+                        f"[MAIN] Process {reset_signal.env_idx} finished"
+                    )
 
                     continue
 
                 # Restore env_idx drone state to the state immediately after
                 # the initial input-output measurement for parameter N
-                if reset:
-                    initial_drone_state = drone_state_cache[N]
+                if reset_signal.reset:
+                    assert reset_signal.N is not None
+                    initial_drone_state = drone_state_cache[reset_signal.N]
                     restore_env_from_state(
                         env=env,
-                        env_idx=env_idx,
+                        env_idx=reset_signal.env_idx,
                         saved_state=initial_drone_state,
                     )
 
                     logger.info(
-                        f"[MAIN] Restored initial state for Process {env_idx}"
+                        "[MAIN] Restored initial state for Process "
+                        f"{reset_signal.env_idx}"
                     )
 
             logger.info("[MAIN] Reached env step point")
