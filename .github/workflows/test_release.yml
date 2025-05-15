@@ -52,6 +52,4 @@ jobs:
           pip install .
 
       - name: Run tests with coverage
-        run: |
-          coverage run -m pytest --maxfail=2 --disable-warnings tests/
-          coverage report
+        run: pytest --cov -n auto --maxfail=2 --disable-warnings
