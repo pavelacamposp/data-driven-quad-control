@@ -75,15 +75,14 @@ def main() -> None:
     # Initialize Genesis simulator
     gs.init(backend=gs.gpu, logging_level="error")
 
-    # Create environment with a single instance
+    # Load environment configuration
     env_cfg, obs_cfg, reward_cfg, command_cfg = get_cfgs()
 
     # Set up visualization
     env_cfg["visualize_target"] = True
-    env_cfg["visualize_camera"] = False  # Enable camera for recording
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
-    # Create vectorized environment
+    # Create environment
     show_viewer = not headless
     env = HoverEnv(
         num_envs=num_envs,

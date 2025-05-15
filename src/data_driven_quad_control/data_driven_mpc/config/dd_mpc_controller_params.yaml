@@ -1,0 +1,95 @@
+---
+# Nonlinear Data-Driven MPC Parameters
+# Parameters are defined based on the Nonlinear Data-Driven MPC controller
+# implementation available at:
+# https://github.com/pavelacamposp/direct_data_driven_mpc
+#
+# This repository implements a Nonlinear Data-Driven MPC controller based on
+# the controller schemes described in the following paper:
+#
+# J. Berberich, J. Köhler, M. A. Müller and F. Allgöwer, "Linear Tracking MPC
+# for Nonlinear Systems—Part II: The Data-Driven Case," in IEEE Transactions on
+# Automatic Control, vol. 67, no. 9, pp. 4406-4421, Sept. 2022, doi:
+# 10.1109/TAC.2022.3166851.
+
+nonlinear_dd_mpc_approx_1_step:
+  # Target position for data collection
+  # Note:
+  # Drones in simulation are stabilized at this target by a stabilizing
+  # controller. This ensures effective data collection while maintaining drone
+  # stability.
+  init_hover_pos: [0.0, 0.0, 1.5]
+
+  n: 6  # Estimated system order
+
+  N: 350  # Initial input-output trajectory length
+  L: 30  # Prediction horizon
+
+  # Weighting matrices
+  Q_weights: [10, 10, 10]  # Output weighting matrix Q weights
+  R_weights: [1, 1, 1]  # Input weighting matrix R weights
+  S_weights: [100, 100, 100]  # Output setpoint weighting matrix S weights
+
+  lambda_alpha: 1e2  # Regularization parameter for alpha
+  lambda_sigma: 1e7  # Regularization parameter for sigma
+
+  # Bounds for the predicted input
+  U:
+    - [0, 0.52974]  # Total thrust [N]
+    - [-1.5708, 1.5708]  # Roll angular rate [rad/s]
+    - [-1.5708, 1.5708]  # Pitch angular rate [rad/s]
+
+  # Bounds for the predicted input setpoint (must be a subset of U)
+  Us:
+    - [0.001, 0.528]  # Total thrust [N]
+    - [-1.571, 1.570]  # Roll angular rate [rad/s]
+    - [-1.571, 1.570]  # Pitch angular rate [rad/s]
+
+  # Range of the persistently exciting input u
+  # Note:
+  # In general, `u_range` defines the space from which persistently exciting
+  # control inputs are sampled. However, in this application, it is used as
+  # a perturbation added to the stabilizing controller's commands.
+  # As a result, the input used for collecting output data is the sum of the
+  # stabilizing controller commands and the persistently exciting input.
+  u_range:
+    - [-0.1, 0.1]  # Total thrust [N]
+    - [-0.5, 0.5]  # Roll angular rate [rad/s]
+    - [-0.5, 0.5]  # Pitch angular rate [rad/s]
+
+  # Alpha regularization type:
+  # - 0 = Approximated → Regularized w.r.t. an approximation of
+  #                      alpha_Lin^sr(D_t).
+  # - 1 = Previous → Regularized w.r.t. a previous optimal alpha value to
+  #                  encourage stationary behavior.
+  # - 2 = Zero → Regularized w.r.t. zero.
+  alpha_reg_type: 0
+
+  # Nonlinear MPC parameters for alpha_reg_type = 0 (Approximated)
+  lamb_alpha_s: 1e0  #  Regularization parameter for alpha_s (optional)
+  lamb_sigma_s: 1e7  #  Regularization parameter for sigma_s (optional)
+
+  # System output setpoint (i.e., drone target position)
+  # Note: The drone is initially stabilized at `init_hover_pos` for the initial
+  # input-output data collection.
+  y_r: [1.0, 1.0, 2.5]
+
+  # Control system structure (Extended Output and Input Increments):
+  # - true → Controller uses an extended output representation
+  #          (y_ext[k] = [y[k], u[k]]) and input increments where the control
+  #          input is updated incrementally as: u[k] = u[k-1] + du[k-1].
+  # - false → Standard controller operation. Direct control input, without
+  #           extensions.
+  ext_out_incr_in: false
+
+  # Tracking cost value threshold
+  # If set, online input-output data updates are disabled when the tracking
+  # cost value is less than this value to ensure prediction data is always
+  # persistently exciting.
+  # If set to `null` or 0, input-output data is always updated online.
+  update_cost_threshold: null
+
+  # Enable n-Step Data-Driven MPC:
+  # - true = n-Step Data-Driven MPC
+  # - false = 1-Step Data-Driven MPC
+  n_n_mpc_step: false

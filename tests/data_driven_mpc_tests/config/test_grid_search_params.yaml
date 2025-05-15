@@ -1,0 +1,38 @@
+---
+initial_data_collection:
+  init_hover_pos: [0.0, 0.0, 1.0]
+  u_range:
+    - [-0.1, 0.1]
+    - [-0.1, 0.1]
+    - [-0.1, 0.1]
+
+fixed_params:
+  Q_weights: [1, 1, 1]
+  R_weights: [1, 1, 1]
+  S_weights: [1, 1, 1]
+  U:
+    - [0.0, 1.0]
+    - [-0.5, 0.5]
+    - [-0.5, 0.5]
+  Us:
+    - [0.1, 0.9]
+    - [-0.4, 0.4]
+    - [-0.4, 0.4]
+  alpha_reg_type: 0
+  ext_out_incr_in: false
+  n_n_mpc_step: false
+
+parameter_grid:
+  N: [40, 45]
+  n: [2]
+  L: [5]
+  lamb_alpha: [10]
+  lamb_sigma: [1000]
+  lamb_alpha_s: [10]
+  lamb_sigma_s: [1000]
+
+evaluation_params:
+  eval_time_steps: 20
+  eval_setpoints:
+    - [1.0, 1.0, 1.0]
+  max_target_dist_increment: 0.5
