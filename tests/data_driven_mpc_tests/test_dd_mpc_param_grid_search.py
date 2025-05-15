@@ -123,12 +123,12 @@ def test_dd_mpc_param_grid_search(
     with torch.no_grad():
         results = parallel_grid_search(
             env=env,
+            num_processes=num_processes,
             parameter_combinations=parameter_combinations,
             fixed_params=fixed_params,
             eval_params=eval_params,
             data_driven_cache=data_driven_cache,
             drone_state_cache=drone_state_cache,
-            num_processes=num_processes,
         )
 
     # Write results to a file
