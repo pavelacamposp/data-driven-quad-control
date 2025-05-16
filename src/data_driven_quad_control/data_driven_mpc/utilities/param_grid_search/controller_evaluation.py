@@ -279,7 +279,7 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
     fixed_params: DDMPCFixedParams,
     num_steps: int,
     initial_distance: float,
-    max_target_dist_increment: float,
+    max_target_dist_increment: float | None = None,
 ) -> float:
     """
     Simulate a closed-loop control using a nonlinear data-driven MPC controller
@@ -314,9 +314,10 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
         num_steps (int): The total number of simulation steps.
         initial_distance (float): The initial distance between the drone and
             the target position.
-        max_target_dist_increment (float): The maximum allowed increment in
-            distance to the target relative to the initial distance. If
-            exceeded, the evaluation run is terminated early.
+        max_target_dist_increment (float | None): The maximum allowed increment
+            in distance to the target relative to the initial distance. If
+            exceeded, the evaluation run is terminated early. If `None`, this
+            early termination check will be disabled. Defaults to `None`.
 
     Returns:
         float: The root mean square error (RMSE) of the drone's position
@@ -402,21 +403,28 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
                 du_current=du_current,
             )
 
-            # Stop simulation by raising a ValueError if the
-            # distance from the drone to its setpoint position
-            # is greater than the initial distance
-            current_distance = np.linalg.norm(y_sys[k, :].reshape(-1, 1) - y_r)
-            if current_distance - initial_distance > max_target_dist_increment:
-                logger.warning(
-                    f"[Process {env_idx}] Drone moved too far from its "
-                    "target. Raising ValueError to terminate evaluation."
+            if max_target_dist_increment is not None:
+                # Stop simulation by raising a ValueError if the distance from
+                # the drone to its setpoint position has increased by more than
+                # `max_target_dist_increment` compared to the initial distance
+                current_distance = np.linalg.norm(
+                    y_sys[k, :].reshape(-1, 1) - y_r
                 )
 
-                raise ValueError(
-                    "Drone moved away from its target by more than "
-                    f"{max_target_dist_increment} relative to its initial "
-                    "distance."
-                )
+                if (
+                    current_distance - initial_distance
+                    > max_target_dist_increment
+                ):
+                    logger.warning(
+                        f"[Process {env_idx}] Drone moved too far from its "
+                        "target. Raising ValueError to terminate evaluation."
+                    )
+
+                    raise ValueError(
+                        "Drone moved away from its target by more than "
+                        f"{max_target_dist_increment} relative to its initial "
+                        "distance."
+                    )
 
     # Calculate target position tracking RMSE
     rmse = math.sqrt(np.mean(np.sum((y_sys - y_r.T) ** 2, axis=1)))
