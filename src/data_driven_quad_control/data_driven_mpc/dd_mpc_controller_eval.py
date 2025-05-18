@@ -36,7 +36,7 @@ from direct_data_driven_mpc.utilities.controller.data_driven_mpc_sim import (
     simulate_nonlinear_data_driven_mpc_control_loop,
 )
 
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
     get_cfgs,
 )

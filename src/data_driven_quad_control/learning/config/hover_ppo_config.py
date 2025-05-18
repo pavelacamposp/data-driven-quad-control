@@ -1,6 +1,6 @@
 from typing import Any
 
-from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
+from data_driven_quad_control.envs.hover_env_config import EnvActionType
 
 # Mapping for env action types
 ENV_ACTION_TYPES_MAP = {

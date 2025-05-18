@@ -15,8 +15,8 @@ from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_
     DDMPCInitialDataCollectionParams,
     DDMPCParameterGrid,
 )
-from data_driven_quad_control.envs.config.hover_env_config import EnvState
 from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import EnvState
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
 )

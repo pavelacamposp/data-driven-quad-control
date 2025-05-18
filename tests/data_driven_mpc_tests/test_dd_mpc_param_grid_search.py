@@ -21,7 +21,7 @@ from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.results_writer import (  # noqa: E501
     write_results_to_file,
 )
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
 )
 from data_driven_quad_control.utilities.drone_environment import (

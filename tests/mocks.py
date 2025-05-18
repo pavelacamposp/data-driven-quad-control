@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
     EnvState,
 )

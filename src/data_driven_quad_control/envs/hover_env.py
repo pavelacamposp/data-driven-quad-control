@@ -34,16 +34,17 @@ from genesis.utils.geom import (
 from data_driven_quad_control.controllers.ctbr.ctbr_controller import (
     DroneCTBRController,
 )
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.utilities.math_utils import (
+    gs_rand_float,
+    linear_interpolate,
+)
+
+from .hover_env_config import (
     EnvActionBounds,
     EnvActionType,
     EnvCTBRControllerConfig,
     EnvDroneParams,
     EnvState,
-)
-from data_driven_quad_control.utilities.math_utils import (
-    gs_rand_float,
-    linear_interpolate,
 )
 
 
