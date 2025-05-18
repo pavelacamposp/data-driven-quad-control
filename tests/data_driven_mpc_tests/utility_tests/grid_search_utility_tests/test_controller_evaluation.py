@@ -2,6 +2,9 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import torch.multiprocessing as mp
+from direct_data_driven_mpc.nonlinear_data_driven_mpc_controller import (
+    NonlinearDataDrivenMPCController,
+)
 
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.controller_evaluation import (  # noqa: E501
     CtrlEvalStatus,
@@ -34,30 +37,6 @@ SIM_DD_MPC_CONTROLLER_PATCH_PATH = (
 CREATE_DD_MPC_CONTROLLER_PATCH_PATH = (
     CONTROLLER_EVAL_MODULE_PATH + ".create_dd_mpc_controller_for_combination"
 )
-
-
-class MockNonlinearDDMPCController:
-    def __init__(self) -> None:
-        self.n = 2
-        self.N = 40
-        self.y_r = np.zeros((3, 1))
-
-    def update_and_solve_data_driven_mpc(self) -> None:
-        pass
-
-    def get_optimal_control_input_at_step(self, n_step: int) -> np.ndarray:
-        return np.array([0.1, 0.1, 0.1])
-
-    def get_du_value_at_step(self, n_step: int) -> np.ndarray:
-        return np.zeros(3)
-
-    def store_input_output_measurement(
-        self,
-        u_current: np.ndarray,
-        y_current: np.ndarray,
-        du_current: np.ndarray,
-    ) -> None:
-        pass
 
 
 @patch(RUN_IN_ISOLATED_PROCESS_PATCH_PATH)
@@ -113,13 +92,14 @@ def test_evaluate_dd_mpc_controller_combination(
 def test_isolated_controller_evaluation(
     mock_create_controller: Mock,
     mock_sim_controller_loop: Mock,
+    mock_dd_mpc_controller: NonlinearDataDrivenMPCController,
     test_combination_params: DDMPCCombinationParams,
     test_eval_params: DDMPCEvaluationParams,
     test_fixed_params: DDMPCFixedParams,
 ) -> None:
     # Mock controller return value from
     # `create_dd_mpc_controller_for_combination`
-    mock_create_controller.return_value = MockNonlinearDDMPCController()
+    mock_create_controller.return_value = mock_dd_mpc_controller
 
     # Mock RMSE return value from `sim_nonlinear_dd_mpc_control_loop_parallel`
     mock_sim_controller_loop.return_value = 1.0
@@ -165,13 +145,14 @@ def test_isolated_controller_evaluation(
 
 
 def test_sim_nonlinear_dd_mpc_control_loop_parallel(
+    mock_dd_mpc_controller: NonlinearDataDrivenMPCController,
     test_eval_params: DDMPCEvaluationParams,
     test_fixed_params: DDMPCFixedParams,
 ) -> None:
     # Create test parameters
     env_idx = 0
     data_entry_idx = 123
-    dummy_controller = MockNonlinearDDMPCController()
+    dummy_controller = mock_dd_mpc_controller
     dummy_env_reset_queue: mp.Queue = mp.Queue()
     dummy_action_queue: mp.Queue = mp.Queue()
     dummy_observation_queue: mp.Queue = mp.Queue()

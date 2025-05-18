@@ -1,0 +1,31 @@
+---
+# Controller Performance Comparison Parameters
+
+# Tracking controller configuration
+tracking_controller:
+  config_path: configs/controllers/tracking/tracking_controller_params.yaml
+
+# Data-driven MPC controller configuration
+dd_mpc_controller:
+  config_path: configs/data_driven_mpc/dd_mpc_controller_params.yaml
+  controller_key: nonlinear_dd_mpc_approx_1_step
+
+# Reinforcement Learning (trained PPO policy) controller model
+rl_ppo_model:
+  model_path: models/demo/ctbr_fixed_yaw_model_1000.pt
+
+# Parameters for the controller comparison scenario
+comparison_params:
+  # Initial hover position for all drones
+  # Notes:
+  # - At the start, all drones in simulation are stabilized at this target by a
+  #   stabilizing controller.
+  # - After stabilization, the data-driven MPC controller collects initial data
+  #   at this position, while the other drones remain stabilized.
+  init_hover_pos: [0.0, 0.0, 1.5]
+
+  # Target setpoints for evaluation
+  eval_setpoints:
+    - [1.0, 1.0, 2.5]
+    - [0.0, 0.0, 1.5]
+    - [-1.0, -1.0, 0.5]
