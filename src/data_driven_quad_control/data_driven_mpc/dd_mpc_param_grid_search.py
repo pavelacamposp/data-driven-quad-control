@@ -136,9 +136,9 @@ DD_MPC_CONFIG_DIR = os.path.abspath(
 )
 
 # Data-Driven MPC Grid Search configuration file
-DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_FILE = "dd_mpc_grid_search_params.yaml"
 DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_PATH = os.path.join(
-    DD_MPC_CONFIG_DIR, DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_FILE
+    os.path.dirname(__file__),
+    "../../../configs/data_driven_mpc/dd_mpc_grid_search_params.yaml",
 )
 
 

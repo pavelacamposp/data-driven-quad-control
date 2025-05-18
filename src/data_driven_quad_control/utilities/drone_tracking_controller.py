@@ -26,7 +26,7 @@ from data_driven_quad_control.utilities.math_utils import (
 # Config file path for drone tracking controller parameters
 TRACKING_CONTROLLER_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
-    "../controllers/tracking/config/tracking_controller_params.yaml",
+    "../../../configs/controllers/tracking/tracking_controller_params.yaml",
 )
 
 
