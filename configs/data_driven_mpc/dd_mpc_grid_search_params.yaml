@@ -21,8 +21,8 @@ initial_data_collection:
 
 fixed_params:
   Q_weights: [10, 10, 10]  # Output weighting matrix Q weights
-  R_weights: [1, 1, 1]  # Input weighting matrix R weights
-  S_weights: [100, 100, 100]  # Output setpoint weighting matrix S weights
+  R_weights: [10, 1, 1]  # Input weighting matrix R weights
+  S_weights: [1000, 1000, 1000]  # Output setpoint weighting matrix S weights
 
   # Bounds for the predicted input
   U:
@@ -79,31 +79,31 @@ evaluation_params:
   # Defines the maximum allowable increment in the drone's distance to its
   # target relative to the initial distance. If exceeded during evaluation, the
   # run is terminated early.
-  max_target_dist_increment: 0.5
+  max_target_dist_increment: 0.2
 
   # Number of distinct initial data collections per trajectory length
   # Defines the number of distinct initial data collections per trajectory
   # length (`N`). This allows evaluating the same controller parameters with
   # different initial data, indirectly validating its robustness.
-  num_collections_per_N: 5
+  num_collections_per_N: 3
 
 parameter_grid:
   # Initial input-output trajectory length
   N: [350]
 
   # Estimated system order
-  n: [2, 4, 6]
+  n: [4, 6]
 
   # Prediction horizon
-  L: [30, 35, 40]
+  L: [35]
 
   # Regularization parameters for alpha and sigma
-  lamb_alpha: [1e0, 1e1, 1e2, 1e3, 1e4]
-  lamb_sigma: [1e3, 1e4, 1e5, 1e7, 1e9]
+  lamb_alpha: [1e0, 1e1, 5e1, 1e2, 5e2, 1e3]
+  lamb_sigma: [1e1, 1e3, 1e5, 1e7]
 
   # Regularization parameter for alpha_s and sigma_s
   # Note:
   # Set to [0.0] if the alpha regularization type (`alpha_reg_type`) is not
   # approximated, as these parameters are unused in that case.
-  lamb_alpha_s: [1e0, 1e1, 1e2, 1e3, 1e4]
-  lamb_sigma_s: [1e3, 1e4, 1e5, 1e7, 1e9]
+  lamb_alpha_s: [1e-3, 1e-2, 1e-1, 1e0, 1e1]
+  lamb_sigma_s: [1e3, 1e4, 1e5, 1e7]
