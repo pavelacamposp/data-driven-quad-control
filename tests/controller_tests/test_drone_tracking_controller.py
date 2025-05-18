@@ -3,10 +3,10 @@ from typing import Any
 
 import torch
 
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
 )
-from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.utilities.drone_tracking_controller import (
     create_drone_tracking_controller,
     hover_at_target,

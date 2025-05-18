@@ -22,8 +22,8 @@ import torch
 import torch.multiprocessing as mp
 from tqdm import tqdm
 
-from data_driven_quad_control.envs.config.hover_env_config import EnvState
 from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import EnvState
 from data_driven_quad_control.utilities.drone_environment import (
     restore_env_from_state,
 )

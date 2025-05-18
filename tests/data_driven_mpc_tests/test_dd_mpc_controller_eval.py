@@ -19,7 +19,7 @@ from data_driven_quad_control.data_driven_mpc.utilities.drone_initial_data_colle
 from data_driven_quad_control.data_driven_mpc.utilities.drone_system_model import (  # noqa: E501
     create_system_model,
 )
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
 )
 from data_driven_quad_control.utilities.drone_environment import (

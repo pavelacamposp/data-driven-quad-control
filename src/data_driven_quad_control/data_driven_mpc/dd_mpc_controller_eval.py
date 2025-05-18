@@ -36,7 +36,7 @@ from direct_data_driven_mpc.utilities.controller.data_driven_mpc_sim import (
     simulate_nonlinear_data_driven_mpc_control_loop,
 )
 
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
     get_cfgs,
 )
@@ -66,9 +66,9 @@ DD_MPC_CONFIG_DIR = os.path.abspath(
 )
 
 # Data-Driven MPC controller configuration file
-DEFAULT_CONTROLLER_CONFIG_FILE = "dd_mpc_controller_params.yaml"
 DEFAULT_CONTROLLER_CONFIG_PATH = os.path.join(
-    DD_MPC_CONFIG_DIR, DEFAULT_CONTROLLER_CONFIG_FILE
+    os.path.dirname(__file__),
+    "../../../configs/data_driven_mpc/dd_mpc_controller_params.yaml",
 )
 DEFAULT_CONTROLLER_KEY_VALUE = "nonlinear_dd_mpc_approx_1_step"
 

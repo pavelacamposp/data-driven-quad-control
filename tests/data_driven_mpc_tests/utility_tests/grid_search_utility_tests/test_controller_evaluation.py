@@ -16,7 +16,7 @@ from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_
     DDMPCFixedParams,
     EnvResetSignal,
 )
-from data_driven_quad_control.envs.config.hover_env_config import EnvState
+from data_driven_quad_control.envs.hover_env_config import EnvState
 
 CONTROLLER_EVAL_MODULE_PATH = (
     "data_driven_quad_control.data_driven_mpc.utilities.param_grid_search."

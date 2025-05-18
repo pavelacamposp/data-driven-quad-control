@@ -3,11 +3,11 @@ from typing import Any
 import torch
 from torch.testing import assert_close
 
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
     EnvDroneParams,
 )
-from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.utilities.math_utils import linear_interpolate
 
 

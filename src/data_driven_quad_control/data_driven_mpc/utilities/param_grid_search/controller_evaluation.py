@@ -19,7 +19,7 @@ from direct_data_driven_mpc.nonlinear_data_driven_mpc_controller import (
     NonlinearDataDrivenMPCController,
 )
 
-from data_driven_quad_control.envs.config.hover_env_config import EnvState
+from data_driven_quad_control.envs.hover_env_config import EnvState
 
 from .controller_creation import create_dd_mpc_controller_for_combination
 from .isolated_execution import run_in_isolated_process

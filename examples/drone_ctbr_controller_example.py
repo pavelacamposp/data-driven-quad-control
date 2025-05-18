@@ -12,13 +12,13 @@ import argparse
 import genesis as gs
 import torch
 
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionBounds,
     EnvActionType,
     EnvDroneParams,
     get_cfgs,
 )
-from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.utilities.math_utils import linear_interpolate
 
 

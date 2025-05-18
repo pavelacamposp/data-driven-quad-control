@@ -7,7 +7,7 @@ from direct_data_driven_mpc.nonlinear_data_driven_mpc_controller import (
     AlphaRegType,
 )
 
-from data_driven_quad_control.envs.config.hover_env_config import EnvState
+from data_driven_quad_control.envs.hover_env_config import EnvState
 
 
 class DDMPCInitialDataCollectionParams(NamedTuple):

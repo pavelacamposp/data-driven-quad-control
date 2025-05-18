@@ -15,13 +15,13 @@ import torch
 from data_driven_quad_control.controllers.ctbr.ctbr_controller import (
     DroneCTBRController,
 )
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
     EnvCTBRControllerConfig,
     EnvDroneParams,
     get_cfgs,
 )
-from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.utilities.drone_environment import (
     update_env_target_pos,
 )

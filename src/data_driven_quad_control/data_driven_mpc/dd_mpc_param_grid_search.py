@@ -85,7 +85,7 @@ import genesis as gs
 import numpy as np
 import torch
 
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env_config import (
     get_cfgs,
 )
 from data_driven_quad_control.utilities.drone_environment import (
@@ -136,9 +136,9 @@ DD_MPC_CONFIG_DIR = os.path.abspath(
 )
 
 # Data-Driven MPC Grid Search configuration file
-DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_FILE = "dd_mpc_grid_search_params.yaml"
 DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_PATH = os.path.join(
-    DD_MPC_CONFIG_DIR, DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_FILE
+    os.path.dirname(__file__),
+    "../../../configs/data_driven_mpc/dd_mpc_grid_search_params.yaml",
 )
 
 

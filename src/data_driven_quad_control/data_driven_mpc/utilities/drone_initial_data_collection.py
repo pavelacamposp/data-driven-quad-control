@@ -21,8 +21,8 @@ from data_driven_quad_control.controllers.tracking.tracking_controller import (
 from data_driven_quad_control.controllers.tracking.tracking_controller_config import (  # noqa: E501
     TrackingCtrlDroneState,
 )
-from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
 from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import EnvActionType
 from data_driven_quad_control.utilities.math_utils import (
     linear_interpolate,
     yaw_to_quaternion,

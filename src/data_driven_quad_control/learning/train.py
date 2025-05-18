@@ -13,8 +13,8 @@ import shutil
 import genesis as gs
 from rsl_rl.runners import OnPolicyRunner
 
-from data_driven_quad_control.envs.config.hover_env_config import get_cfgs
 from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import get_cfgs
 from data_driven_quad_control.learning.config.hover_ppo_config import (
     ENV_ACTION_TYPES_MAP,
     get_train_cfg,

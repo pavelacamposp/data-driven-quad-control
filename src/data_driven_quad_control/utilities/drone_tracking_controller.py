@@ -13,11 +13,11 @@ from data_driven_quad_control.controllers.tracking.tracking_controller import (
 from data_driven_quad_control.controllers.tracking.tracking_controller_config import (  # noqa: E501
     TrackingCtrlDroneState,
 )
-from data_driven_quad_control.envs.config.hover_env_config import (
+from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
     EnvDroneParams,
 )
-from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.utilities.math_utils import (
     linear_interpolate,
     yaw_to_quaternion,
@@ -26,7 +26,7 @@ from data_driven_quad_control.utilities.math_utils import (
 # Config file path for drone tracking controller parameters
 TRACKING_CONTROLLER_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
-    "../controllers/tracking/config/tracking_controller_params.yaml",
+    "../../../configs/controllers/tracking/tracking_controller_params.yaml",
 )
 
 

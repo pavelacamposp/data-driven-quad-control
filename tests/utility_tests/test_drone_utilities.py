@@ -3,7 +3,7 @@ from typing import Any
 
 import torch
 
-from data_driven_quad_control.envs.config.hover_env_config import EnvActionType
+from data_driven_quad_control.envs.hover_env_config import EnvActionType
 from data_driven_quad_control.utilities.drone_environment import (
     create_env,
     get_current_env_state,
