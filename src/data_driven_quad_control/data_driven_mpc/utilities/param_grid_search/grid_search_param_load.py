@@ -6,10 +6,11 @@ nonlinear data-driven MPC parameter grid search from a YAML config file.
 """
 
 import numpy as np
-import yaml
 from direct_data_driven_mpc.nonlinear_data_driven_mpc_controller import (
     AlphaRegType,
 )
+
+from data_driven_quad_control.utilities.config_utils import load_yaml_config
 
 from .param_grid_search_config import (
     DDMPCEvaluationParams,
@@ -56,8 +57,7 @@ def load_dd_mpc_grid_search_params(
                 to search over.
     """
     # Load parameters from config file
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
+    config = load_yaml_config(config_path)
 
     if verbose > 1:
         print(

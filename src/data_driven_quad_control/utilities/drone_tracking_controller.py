@@ -1,8 +1,6 @@
 import os
-from typing import Any
 
 import torch
-import yaml
 
 from data_driven_quad_control.controllers.ctbr.ctbr_controller import (
     DroneCTBRController,
@@ -18,6 +16,7 @@ from data_driven_quad_control.envs.hover_env_config import (
     EnvActionType,
     EnvDroneParams,
 )
+from data_driven_quad_control.utilities.config_utils import load_yaml_config
 from data_driven_quad_control.utilities.math_utils import (
     linear_interpolate,
     yaw_to_quaternion,
@@ -28,11 +27,6 @@ TRACKING_CONTROLLER_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
     "../../../configs/controllers/tracking/tracking_controller_params.yaml",
 )
-
-
-def load_yaml_config(path: str) -> Any:
-    with open(path, "r") as file:
-        return yaml.safe_load(file)
 
 
 def create_drone_tracking_controller(env: HoverEnv) -> DroneTrackingController:

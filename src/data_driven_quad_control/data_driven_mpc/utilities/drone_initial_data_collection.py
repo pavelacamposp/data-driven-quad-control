@@ -9,7 +9,6 @@ nonlinear data-driven MPC controllers. It is designed to work with the
 
 import numpy as np
 import torch
-import yaml
 from direct_data_driven_mpc.utilities.models.nonlinear_model import (
     NonlinearSystem,
 )
@@ -23,6 +22,7 @@ from data_driven_quad_control.controllers.tracking.tracking_controller_config im
 )
 from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.envs.hover_env_config import EnvActionType
+from data_driven_quad_control.utilities.config_utils import load_yaml_config
 from data_driven_quad_control.utilities.math_utils import (
     linear_interpolate,
     yaw_to_quaternion,
@@ -206,8 +206,7 @@ def get_init_hover_pos(
     Returns:
         torch.Tensor: The initial hover position with shape (3,).
     """
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
+    config = load_yaml_config(config_path)
 
     hover_pos_list = config[controller_key_value]["init_hover_pos"]
     init_hover_pos = torch.tensor(
