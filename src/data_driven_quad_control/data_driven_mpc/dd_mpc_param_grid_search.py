@@ -97,7 +97,7 @@ from data_driven_quad_control.utilities.drone_tracking_controller import (
     hover_at_target,
 )
 
-from .utilities.param_grid_search.grid_search_param_load import (
+from .utilities.param_grid_search.grid_search_param_loader import (
     load_dd_mpc_grid_search_params,
 )
 from .utilities.param_grid_search.initial_data_collection_cache import (

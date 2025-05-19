@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.grid_search_param_load import (  # noqa: E501
+from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.grid_search_param_loader import (  # noqa: E501
     load_dd_mpc_grid_search_params,
 )
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.initial_data_collection_cache import (  # noqa: E501
