@@ -128,7 +128,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 # Directory paths
 DD_MPC_CONFIG_DIR = os.path.abspath(
@@ -140,6 +140,17 @@ DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
     "../../../configs/data_driven_mpc/dd_mpc_grid_search_params.yaml",
 )
+
+
+def disable_debug_logging() -> None:
+    """Disable logging from child loggers."""
+    logger.info(
+        "Debug logging is disabled. Run grid search with the `--debug` "
+        "argument to enable it."
+    )
+
+    for handler in logger.handlers:
+        handler.setLevel(logging.CRITICAL + 1)
 
 
 def parse_args() -> argparse.Namespace:
@@ -204,7 +215,8 @@ def main() -> None:
     debug = args.debug
 
     # Disable logger if not in debug mode
-    logger.disabled = not debug
+    if not debug:
+        disable_debug_logging()
 
     if verbose:
         print(
