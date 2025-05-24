@@ -148,8 +148,8 @@ def cache_initial_data_and_states(
         drone_state_dict_cpu = drone_state_dict_gpu.to_cpu()
 
         # Store drone states
-        if verbose:
-            print(f"    Saving drone state for N = {N}")
+        if verbose > 1:
+            print("        Saving drone state")
 
         drone_state_cache[N] = drone_state_dict_gpu
         drone_state_cache_cpu[N] = drone_state_dict_cpu
