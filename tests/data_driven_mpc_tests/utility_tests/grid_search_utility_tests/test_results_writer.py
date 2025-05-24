@@ -33,6 +33,7 @@ def test_write_results_to_file(
     # Define test parameters
     test_output_dir = str(tmp_path)
     elapsed_time = 123.123
+    num_processes = 2
     test_results = {
         CtrlEvalStatus.SUCCESS: [
             {"N": 40, "average_RMSE": 1.5},
@@ -49,6 +50,7 @@ def test_write_results_to_file(
     output_path = write_results_to_file(
         output_dir=test_output_dir,
         elapsed_time=elapsed_time,
+        num_processes=num_processes,
         init_data_collection_params=test_init_collection_params,
         fixed_params=test_fixed_params,
         eval_params=test_eval_params,
@@ -64,7 +66,8 @@ def test_write_results_to_file(
         output = f.read()
 
     # Verify expected written values from output
-    assert "Grid search complete in 0h 2m 3.12s." in output
+    assert "Grid search duration: 0h 2m 3.12s" in output
+    assert f"Number of parallel processes: {num_processes}" in output
     assert "n_n_mpc_step: False" in output
     assert "lamb_sigma_s: [1000.0]" in output
     assert "Successful Results (3/6):" in output

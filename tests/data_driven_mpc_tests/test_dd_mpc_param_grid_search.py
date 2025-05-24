@@ -138,6 +138,7 @@ def test_dd_mpc_param_grid_search(
     output_file = write_results_to_file(
         output_dir=test_output_dir,
         elapsed_time=elapsed_time,
+        num_processes=num_processes,
         init_data_collection_params=init_data_collection_params,
         fixed_params=fixed_params,
         eval_params=eval_params,
@@ -153,7 +154,8 @@ def test_dd_mpc_param_grid_search(
         output = f.read()
 
     # Verify file structure
-    assert "Grid search complete in 0h 2m 3.12s." in output
+    assert "Grid search duration: 0h 2m 3.12s" in output
+    assert f"Number of parallel processes: {num_processes}" in output
     assert "Initial data collection parameters:" in output
     assert "Fixed parameters:" in output
     assert "Evaluation parameters:" in output

@@ -420,6 +420,7 @@ def main() -> None:
         output_file = write_results_to_file(
             output_dir=output_dir,
             elapsed_time=elapsed_time,
+            num_processes=num_processes,
             init_data_collection_params=init_data_collection_params,
             fixed_params=fixed_params,
             eval_params=eval_params,

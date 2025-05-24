@@ -25,6 +25,7 @@ from .param_grid_search_config import (
 def write_results_to_file(
     output_dir: str,
     elapsed_time: float,
+    num_processes: int,
     init_data_collection_params: DDMPCInitialDataCollectionParams,
     fixed_params: DDMPCFixedParams,
     eval_params: DDMPCEvaluationParams,
@@ -39,6 +40,8 @@ def write_results_to_file(
     Args:
         output_dir (str): The directory to save the summary report.
         elapsed_time (float): The grid search duration in seconds.
+        num_processes (int): The number of parallel worker processes used
+            during the grid search.
         fixed_params (DDMPCFixedParams): The fixed parameters used in the grid
             search.
         init_data_collection_params (DDMPCInitialDataCollectionParams): The
@@ -76,9 +79,12 @@ def write_results_to_file(
         hours, remaining = divmod(elapsed_time, 3600)
         minutes, seconds = divmod(remaining, 60)
         f.write(
-            f"Grid search complete in {int(hours)}h {int(minutes)}m "
-            f"{seconds:.2f}s.\n"
+            f"Grid search duration: {int(hours)}h {int(minutes)}m "
+            f"{seconds:.2f}s\n"
         )
+
+        # Write number of parallel processes used in the grid search
+        f.write(f"Number of parallel processes: {num_processes}\n")
         f.write("\n")
 
         # Write initial data collection parameter summary
