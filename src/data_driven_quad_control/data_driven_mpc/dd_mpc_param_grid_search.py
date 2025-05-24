@@ -130,11 +130,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
-# Directory paths
-DD_MPC_CONFIG_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "./config")
-)
-
 # Data-Driven MPC Grid Search configuration file
 DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),

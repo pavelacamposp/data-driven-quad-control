@@ -60,11 +60,6 @@ from .utilities.drone_system_model import (
 # Suppress all warnings from CVXPY to maintain clean terminal output
 warnings.filterwarnings("ignore", category=UserWarning, module="cvxpy")
 
-# Directory paths
-DD_MPC_CONFIG_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "./config")
-)
-
 # Data-Driven MPC controller configuration file
 DEFAULT_CONTROLLER_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
