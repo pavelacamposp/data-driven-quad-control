@@ -157,13 +157,13 @@ def parallel_grid_search(
     # Step environment in the main process
     logger.info("[MAIN] Started env stepping")
 
-    total_tasks = len(parameter_combinations)
+    total_combinations = len(parameter_combinations)
     done_processes = 0  # Track how many processes have finished
     action_buffer = torch.zeros(
         (env.num_envs, env.num_actions), device=env.device, dtype=torch.float
     )
 
-    with tqdm(total=total_tasks) as global_pbar:
+    with tqdm(total=total_combinations) as global_pbar:
         while any(p.is_alive() for p in processes):
             # Update global progress bar
             with lock:
@@ -171,7 +171,7 @@ def parallel_grid_search(
                     global_progres_bar=global_pbar,
                     global_progress_value=global_progress.value,
                     n_successful_results=len(successful_results),
-                    total_tasks=total_tasks,
+                    total_combinations=total_combinations,
                 )
 
             # Update number of active processes
@@ -201,8 +201,9 @@ def parallel_grid_search(
                 # Restore env_idx drone state to the state immediately after
                 # the initial input-output measurement for parameter N
                 if reset_signal.reset:
-                    assert reset_signal.N is not None
-                    initial_drone_state = drone_state_cache[reset_signal.N]
+                    data_entry_idx = reset_signal.data_entry_idx
+                    assert data_entry_idx is not None
+                    initial_drone_state = drone_state_cache[data_entry_idx]
                     restore_env_from_state(
                         env=env,
                         env_idx=reset_signal.env_idx,
@@ -287,12 +288,12 @@ def update_global_progress_bar(
     global_progres_bar: tqdm,
     global_progress_value: int,
     n_successful_results: int,
-    total_tasks: int,
+    total_combinations: int,
 ) -> None:
     global_progres_bar.n = global_progress_value
     available_mem_percent = get_available_memory_percent()
     global_progres_bar.desc = (
-        f"Global Progress - {n_successful_results}/{total_tasks} "
+        f"Global Progress - {n_successful_results}/{total_combinations} "
         f"Successful - Available RAM: {available_mem_percent:.2f}%"
     )
 

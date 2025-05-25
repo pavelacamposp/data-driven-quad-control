@@ -109,8 +109,9 @@ def test_dd_mpc_param_grid_search(
         target_yaw=target_yaw,
         init_hovering_state=init_hovering_state,
         init_data_collection_params=init_data_collection_params,
-        param_grid=param_grid,
         fixed_params=fixed_params,
+        eval_params=eval_params,
+        param_grid=param_grid,
         np_random=np_random,
     )
 

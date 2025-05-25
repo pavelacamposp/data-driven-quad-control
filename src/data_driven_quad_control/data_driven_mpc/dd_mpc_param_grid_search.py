@@ -23,6 +23,11 @@ Workflow overview:
    later use. This process is repeated for each `N` value defined in the
    parameter grid.
 
+   For each `N`, data collection is repeated `num_collections_per_N` times
+   (as specified in the configuration file) to enable controller evaluations
+   with different initial data entries. This allows indirect validation of
+   controller robustness based on their performance.
+
 4. Based on the grid search configuration parameters (defined in a YAML
    configuration file), the main process of the grid search spawns multiple
    parallel worker processes. Each worker evaluates multiple unique controller
@@ -352,6 +357,7 @@ def main() -> None:
         init_hovering_state=init_hovering_state,
         init_data_collection_params=init_data_collection_params,
         fixed_params=fixed_params,
+        eval_params=eval_params,
         param_grid=param_grid,
         verbose=verbose,
         np_random=np_random,

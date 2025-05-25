@@ -36,3 +36,4 @@ evaluation_params:
   eval_setpoints:
     - [1.0, 1.0, 1.0]
   max_target_dist_increment: 0.5
+  num_collections_per_N: 2

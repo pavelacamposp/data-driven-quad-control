@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+import numpy as np
 import pytest
 import torch.multiprocessing as mp
 
@@ -35,15 +36,17 @@ def test_worker_data_driven_mpc(
 ) -> None:
     # Mock controller return value from
     # `evaluate_dd_mpc_controller_combination`
+    success_return = {"success": True, "average_RMSE": 1.0}
+    failure_return = {"success": False, "average_RMSE": float(np.nan)}
     if eval_succeeded:
         mock_evaluate_controller.return_value = (
             CtrlEvalStatus.SUCCESS,
-            {"success": True},
+            success_return,
         )
     else:
         mock_evaluate_controller.return_value = (
             CtrlEvalStatus.FAILURE,
-            {"success": False},
+            failure_return,
         )
 
     # Create test parameters
@@ -53,7 +56,7 @@ def test_worker_data_driven_mpc(
     dummy_queue: mp.Queue = mp.Queue()
     dummy_combination_params_queue: mp.Queue = mp.Queue()
     dummy_successful_results = dummy_manager.list()
-    dummy_failed_result = dummy_manager.list()
+    dummy_failed_results = dummy_manager.list()
     dummy_lock = mp.Lock()
     dummy_progress = mp.Value("i", 0)
 
@@ -68,7 +71,7 @@ def test_worker_data_driven_mpc(
         observation_queue=dummy_queue,
         combination_params_queue=dummy_combination_params_queue,
         successful_results=dummy_successful_results,
-        failed_result=dummy_failed_result,
+        failed_result=dummy_failed_results,
         lock=dummy_lock,
         progress=dummy_progress,
         data_driven_cache=test_data_driven_cache,
@@ -79,12 +82,12 @@ def test_worker_data_driven_mpc(
     # Verify success results list data
     if eval_succeeded:
         assert len(dummy_successful_results) == 1
-        assert len(dummy_failed_result) == 0
-        assert dummy_successful_results[0] == {"success": True}
+        assert len(dummy_failed_results) == 0
+        assert dummy_successful_results[0] == success_return
     else:
         assert len(dummy_successful_results) == 0
-        assert len(dummy_failed_result) == 1
-        assert dummy_failed_result[0] == {"success": False}
+        assert len(dummy_failed_results) == 1
+        np.testing.assert_equal(dummy_failed_results[0], failure_return)
 
     # Verify that the progress value increased
     assert dummy_progress.value == 1, "Worker did not increment progress value"

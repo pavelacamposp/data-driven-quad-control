@@ -11,6 +11,7 @@ from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.initia
 )
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_grid_search_config import (  # noqa: E501  # noqa: E501
     DataDrivenCache,
+    DDMPCEvaluationParams,
     DDMPCFixedParams,
     DDMPCInitialDataCollectionParams,
     DDMPCParameterGrid,
@@ -27,8 +28,9 @@ def test_cache_initial_data_and_states(
     mock_tracking_controller: DroneTrackingController,
     test_drone_state: EnvState,
     test_init_collection_params: DDMPCInitialDataCollectionParams,
-    test_param_grid: DDMPCParameterGrid,
     test_fixed_params: DDMPCFixedParams,
+    test_eval_params: DDMPCEvaluationParams,
+    test_param_grid: DDMPCParameterGrid,
 ) -> None:
     # Define test parameters
     target_pos = torch.tensor([[0.0, 0.0, 1.0]])
@@ -43,8 +45,9 @@ def test_cache_initial_data_and_states(
         target_yaw=target_yaw,
         init_hovering_state=test_drone_state,
         init_data_collection_params=test_init_collection_params,
-        param_grid=test_param_grid,
         fixed_params=test_fixed_params,
+        eval_params=test_eval_params,
+        param_grid=test_param_grid,
         np_random=np.random.default_rng(0),
     )
 
@@ -53,18 +56,30 @@ def test_cache_initial_data_and_states(
 
     # Verify that the cache collection iterated
     # through all the `N` values from the grid
-    N_values = set(test_param_grid.N)
-    assert set(data_driven_cache.u_N.keys()) == N_values
-    assert set(data_driven_cache.y_N.keys()) == N_values
-    assert set(data_driven_cache.drone_state.keys()) == N_values
-    assert set(drone_state_cache.keys()) == N_values
+    data_entry_indices = {
+        entry_idx
+        for entry_indices in data_driven_cache.N_to_entry_indices.values()
+        for entry_idx in entry_indices
+    }
 
-    # Verify that the environment states stored in `data_driven_cache`
-    # match to the ones stored in `drone_state_cache`
-    for N in N_values:
+    assert set(data_driven_cache.N.keys()) == data_entry_indices
+    assert set(data_driven_cache.u_N.keys()) == data_entry_indices
+    assert set(data_driven_cache.y_N.keys()) == data_entry_indices
+    assert set(data_driven_cache.drone_state.keys()) == data_entry_indices
+    assert set(drone_state_cache.keys()) == data_entry_indices
+
+    # Verify that the collected `N` values match the original param grid
+    for expected_N in test_param_grid.N:
+        entry_indices = data_driven_cache.N_to_entry_indices[expected_N]
+        for entry_idx in entry_indices:
+            assert data_driven_cache.N[entry_idx] == expected_N
+
+    # Verify that the environment states stored in `data_driven_cache` (CPU)
+    # match the ones stored in `drone_state_cache` (GPU-set to CPU for testing)
+    for i in data_entry_indices:
         assert_env_states_equal(
-            data_driven_cache.drone_state[N],
-            drone_state_cache[N],
+            data_driven_cache.drone_state[i],
+            drone_state_cache[i],
         )
 
 

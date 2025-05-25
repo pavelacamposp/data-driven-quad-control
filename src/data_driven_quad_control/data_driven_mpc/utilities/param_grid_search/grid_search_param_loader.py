@@ -104,6 +104,7 @@ def load_dd_mpc_grid_search_params(
         eval_time_steps=eval_params_raw["eval_time_steps"],
         eval_setpoints=setpoint_list,
         max_target_dist_increment=eval_params_raw["max_target_dist_increment"],
+        num_collections_per_N=eval_params_raw["num_collections_per_N"],
     )
 
     # Load Data-Driven MPC parameter grid

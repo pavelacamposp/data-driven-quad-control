@@ -76,10 +76,16 @@ evaluation_params:
     - [-1.0, 1.0, 1.5]
 
   # Maximum allowed distance increment for evaluation
-  # This defines the maximum allowable increment in the drone's distance to its
+  # Defines the maximum allowable increment in the drone's distance to its
   # target relative to the initial distance. If exceeded during evaluation, the
   # run is terminated early.
   max_target_dist_increment: 0.5
+
+  # Number of distinct initial data collections per trajectory length
+  # Defines the number of distinct initial data collections per trajectory
+  # length (`N`). This allows evaluating the same controller parameters with
+  # different initial data, indirectly validating its robustness.
+  num_collections_per_N: 5
 
 parameter_grid:
   # Initial input-output trajectory length
