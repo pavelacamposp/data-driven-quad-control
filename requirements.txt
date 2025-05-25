@@ -1,6 +1,6 @@
-git+https://github.com/Genesis-Embodied-AI/Genesis.git
-numpy>=1.26.4
-torch==2.6.0
-rsl-rl-lib>=2.3.1
-tensorboard
-git+https://github.com/pavelacamposp/direct_data_driven_mpc.git
+git+https://github.com/Genesis-Embodied-AI/Genesis.git@135f9a0
+numpy==2.2.6
+torch==2.7.0
+rsl-rl-lib==2.3.2
+tensorboard==2.19.0
+git+https://github.com/pavelacamposp/direct_data_driven_mpc.git@7403b3a

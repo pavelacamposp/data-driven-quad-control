@@ -16,6 +16,7 @@ from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.parall
     parallel_grid_search,
 )
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_grid_search_config import (  # noqa: E501
+    CtrlEvalStatus,
     DDMPCCombinationParams,
 )
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.results_writer import (  # noqa: E501
@@ -171,7 +172,10 @@ def test_dd_mpc_param_grid_search(
 
     # Verify successful results were sorted by RMSE in ascending order
     first_result_line = output.split("Successful Results")[1].splitlines()[1]
-    assert "N=40" in first_result_line
+    min_result_rmse = min(
+        result["average_RMSE"] for result in results[CtrlEvalStatus.SUCCESS]
+    )
+    assert f"average_RMSE={min_result_rmse}" in first_result_line
 
     # Sanity checks
     assert output.count("average_RMSE=") == 2
