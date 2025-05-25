@@ -1,5 +1,5 @@
 opencv-python-headless==4.11.0.86
-git+https://github.com/Genesis-Embodied-AI/Genesis.git@135f9a0
+git+https://github.com/Genesis-Embodied-AI/Genesis.git@0c6fdd9
 numpy==2.2.6
 torch==2.7.0
 rsl-rl-lib==2.3.2
