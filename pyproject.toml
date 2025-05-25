@@ -12,12 +12,12 @@ description = "Data-driven control for drones in Genesis: data-driven MPC and re
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10.0"
 dependencies = [
-  "genesis_world @ git+https://github.com/Genesis-Embodied-AI/Genesis",
-  "numpy >=1.26.4",
-  "torch >=2.6.0",
-  "rsl-rl-lib >= 2.3.1",
-  "tensorboard",
-  "direct_data_driven_mpc @ git+https://github.com/pavelacamposp/direct_data_driven_mpc",
+  "genesis_world @ git+https://github.com/Genesis-Embodied-AI/Genesis@0c6fdd9",
+  "numpy==2.2.6",
+  "torch==2.7.0",
+  "rsl-rl-lib==2.3.2",
+  "tensorboard==2.19.0",
+  "direct_data_driven_mpc @ git+https://github.com/pavelacamposp/direct_data_driven_mpc@7403b3a",
 ]
 license = "MIT AND Apache-2.0"
 license-files = ["LICEN[CS]E*"]
