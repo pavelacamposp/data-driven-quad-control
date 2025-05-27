@@ -72,7 +72,12 @@ def main() -> None:
     add_noise = args.add_noise
     headless = args.headless
 
+    print("--- Drone Tracking Controller Example ---")
+    print("-" * 41)
+
     # Initialize Genesis simulator
+    print("Initializing Genesis simulator")
+
     gs.init(backend=gs.gpu, logging_level="error")
 
     # Load environment configuration
@@ -83,6 +88,10 @@ def main() -> None:
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
     # Create environment
+    action_type = ENV_ACTION_TYPES_MAP[action_type]
+
+    print(f"Creating drone environment with {action_type.name} actions")
+
     show_viewer = not headless
     env = HoverEnv(
         num_envs=num_envs,
@@ -92,7 +101,7 @@ def main() -> None:
         command_cfg=command_cfg,
         show_viewer=show_viewer,
         auto_target_updates=False,  # Disable automatic target position updates
-        action_type=ENV_ACTION_TYPES_MAP[action_type],
+        action_type=action_type,
     )
 
     # Reset environment
@@ -109,14 +118,16 @@ def main() -> None:
     target_yaw_list = [0.0, 1.5 * math.pi, -0.5 * math.pi, 0.0, 2 * math.pi]
 
     # Convert targets to tensors
-    target_pos_tensor = torch.tensor(
+    target_pos_tensor_list = torch.tensor(
         target_pos_list, device=env.device, dtype=torch.float
     )
-    target_yaw_tensor = torch.tensor(
+    target_yaw_tensor_list = torch.tensor(
         target_yaw_list, device=env.device, dtype=torch.float
     )
 
     # Create drone tracking controller
+    print("Creating drone tracking controller")
+
     tracking_controller = create_drone_tracking_controller(env=env)
 
     # Create drone CTBR controller if env action type is ROTOR_RPMS
@@ -126,6 +137,8 @@ def main() -> None:
     #     controller is included within the drone environment.
     ctbr_controller = None
     if env.action_type is EnvActionType.ROTOR_RPMS:
+        print("Creating an external CTBR controller")
+
         drone_params = EnvDroneParams.get()
         controller_config = EnvCTBRControllerConfig.get()
         ctbr_controller = DroneCTBRController(
@@ -135,19 +148,34 @@ def main() -> None:
             num_envs=num_envs,
             device=env.device,
         )
+    else:
+        print(
+            "CTBR controller not created (already initialized within the env)"
+        )
 
     # Command drones to hover at each target
-    noise_scale = 0.5  # Noise scale for target positions
-    for i in range(len(target_pos_tensor)):
-        print(f"Hovering at target group {i + 1}/{len(target_pos_tensor)}")
+    print("Drone tracking control simulation")
 
-        target_pos = target_pos_tensor[i].repeat(num_envs, 1)
-        target_yaw = target_yaw_tensor[i].expand(num_envs)
+    noise_scale = 0.5  # Noise scale for target positions
+    num_targets = len(target_pos_tensor_list)
+    for i in range(num_targets):
+        target_pos_tensor = target_pos_tensor_list[i]
+        target_yaw_tensor = target_yaw_tensor_list[i]
+
+        print(
+            f"  [{i + 1}/{num_targets}] Hovering at target pos: "
+            f"{target_pos_tensor.tolist()}, yaw: "
+            f"{target_yaw_tensor.item():6.4f}"
+        )
+
+        target_pos = target_pos_tensor.repeat(num_envs, 1)
+        target_yaw = target_yaw_tensor.expand(num_envs)
 
         # Add noise to target positions to show independent control behavior
         if add_noise:
             target_pos += 2 * noise_scale * (torch.rand_like(target_pos) - 0.5)
             target_pos[:, 2] = torch.clamp(target_pos[:, 2], min=0.2, max=1.9)
+            print("         * Added target position noise")
 
         # Update environment goal position for visualization
         update_env_target_pos(
@@ -164,6 +192,8 @@ def main() -> None:
             error_threshold=5e-2,
             ctbr_controller=ctbr_controller,
         )
+
+    print("Control simulation finished.")
 
 
 if __name__ == "__main__":

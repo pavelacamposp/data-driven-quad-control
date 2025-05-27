@@ -37,13 +37,6 @@ def parse_args() -> argparse.Namespace:
         help="The number of simulation steps.",
     )
     parser.add_argument(
-        "--verbose",
-        type=int,
-        default=0,
-        choices=[0, 1],
-        help="The level of verbosity.",
-    )
-    parser.add_argument(
         "--headless", action="store_true", help="Disable GUI viewer."
     )
 
@@ -54,10 +47,14 @@ def main() -> None:
     args = parse_args()
     num_envs = args.num_envs
     num_steps = args.num_steps
-    verbose = args.verbose
     headless = args.headless
 
+    print("--- Drone CTBR Controller Example ---")
+    print("-" * 37)
+
     # Initialize Genesis simulator
+    print("Initializing Genesis simulator")
+
     gs.init(backend=gs.gpu, logging_level="warning")
 
     # Load environment configuration
@@ -68,6 +65,11 @@ def main() -> None:
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
     # Create environment
+    print(
+        "Creating drone environment with internal CTBR controller "
+        "(CTBR actions)"
+    )
+
     show_viewer = not headless
     env = HoverEnv(
         num_envs=num_envs,
@@ -91,7 +93,7 @@ def main() -> None:
     #    Roll rate [rad/s],
     #    Pitch rate [rad/s],
     #    Yaw rate [rad/s]]
-    ctbr_setpoints_list = [
+    ctbr_setpoint_list = [
         # Positive Yaw rate
         [EnvDroneParams.WEIGHT, 0.0, 0.0, 5.0],
         # Ascend with negative Yaw rate
@@ -115,23 +117,29 @@ def main() -> None:
         [EnvDroneParams.WEIGHT, 0.0, -0.01, 0.0],
     ]
 
-    # Calculate env actions from setpoints
-    ctbr_env_action_list = []
-    for ctbr_setpoint in ctbr_setpoints_list:
-        ctbr_setpoint_tensor = torch.tensor(
+    ctbr_setpoint_tensor_list = [
+        torch.tensor(
             ctbr_setpoint,
             dtype=torch.float,
             device=env.device,
         ).expand(num_envs, -1)
+        for ctbr_setpoint in ctbr_setpoint_list
+    ]
 
-        # Clamp setpoint between environment action bounds to prevent
-        # user defined setpoints from exceeding action bounds
-        ctbr_setpoint_tensor = torch.clamp(
+    # Clamp setpoint between environment action bounds to prevent
+    # user defined setpoints from exceeding action bounds
+    ctbr_setpoint_tensor_list = [
+        torch.clamp(
             ctbr_setpoint_tensor,
             min=ctbr_setpoint_bounds[:, 0],
             max=ctbr_setpoint_bounds[:, 1],
         )
+        for ctbr_setpoint_tensor in ctbr_setpoint_tensor_list
+    ]
 
+    # Calculate env actions from setpoints
+    ctbr_env_action_list = []
+    for ctbr_setpoint_tensor in ctbr_setpoint_tensor_list:
         # Normalize CTBR controller setpoints to a [-1, 1] range
         # to get the action expected by the environment
         ctbr_env_action = linear_interpolate(
@@ -145,7 +153,11 @@ def main() -> None:
         ctbr_env_action_list.append(ctbr_env_action)
 
     # Simulate drone environment
+    print("Drone CTBR control simulation")
+
+    num_setpoints = len(ctbr_setpoint_list)
     steps_per_command = num_steps // len(ctbr_env_action_list)
+    prev_action_idx = -1
     with torch.no_grad():
         for step in range(num_steps):
             # Calculate action idx for ctbr action selection
@@ -155,27 +167,36 @@ def main() -> None:
 
             ctbr_env_action = ctbr_env_action_list[action_idx]
 
+            if action_idx != prev_action_idx:
+                if prev_action_idx != -1:
+                    print()
+                print(
+                    f"  [{action_idx + 1}/{num_setpoints}] CTBR setpoint: "
+                    f"{ctbr_setpoint_list[action_idx]}\n"
+                )
+                prev_action_idx = action_idx
+
             # Step simulation
             env.step(ctbr_env_action)
 
             # Print control error for the env of idx 0
-            # if verbose output is enabled
-            if verbose:
-                ctbr_measurement = torch.hstack(
-                    [ctbr_env_action[0, 0], env.base_ang_vel[0, :]]
-                )
-                # Note: The total thrust is directly applied in the drone env,
-                # so we assume it immediately matches its setpoint
+            ctbr_setpoint = ctbr_setpoint_tensor_list[action_idx]
+            ctbr_thrust_setpoint = ctbr_setpoint[0, 0]
+            ctbr_measurement = torch.hstack(
+                [ctbr_thrust_setpoint, env.base_ang_vel[0, :]]
+            )
+            # Note: The total thrust is directly applied in the drone env,
+            # so we assume it immediately matches its setpoint
 
-                print_formatted_control_data(
-                    setpoint=ctbr_env_action[0, :],
-                    measurement=ctbr_measurement,
-                    label="CTBR Controller",
-                )
+            print_formatted_control_data(
+                setpoint=ctbr_setpoint[0, :], measurement=ctbr_measurement
+            )
+
+    print("\nControl simulation finished.")
 
 
 def print_formatted_control_data(
-    setpoint: torch.Tensor, measurement: torch.Tensor, label: str
+    setpoint: torch.Tensor, measurement: torch.Tensor
 ) -> None:
     setpoint_array = setpoint.cpu().numpy()
     measurement_array = measurement.cpu().numpy()
@@ -184,13 +205,16 @@ def print_formatted_control_data(
     error_array = setpoint_array - measurement_array
 
     # Format arrays for printing
-    formatted_setpoint = ", ".join(
-        [f"{setpoint:>6.3f}" for setpoint in setpoint_array]
+    formatted_measurement = ", ".join(
+        [f"{measurement:>7.5f}" for measurement in measurement_array]
     )
     formatted_error = ", ".join([f"{error:>10.3e}" for error in error_array])
 
+    print(f"\033[F\033[K        Measurement: [{formatted_measurement}]")
     print(
-        f"{label} Setpoint: [{formatted_setpoint}] Error: [{formatted_error}]"
+        f"\033[K        Error: [{formatted_error}]",
+        end="",
+        flush=True,
     )
 
 
