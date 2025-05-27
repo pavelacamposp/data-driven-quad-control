@@ -44,6 +44,9 @@ def main() -> None:
     args = parse_args()
     num_envs = args.num_envs
 
+    print("--- CTBR Controller Example ---")
+    print("-" * 31)
+
     # Define drone parameters and CTBR controller configuration
     drone_params: DroneParams = {
         "drone_physical_params": {
@@ -77,6 +80,8 @@ def main() -> None:
     dt = 0.04  # Controller frequency 25 Hz [s]
 
     # Initialize `DroneCTBRController`
+    print("Initializing CTBR controller")
+
     device = "cuda"
     controller = DroneCTBRController(
         drone_params=drone_params,
@@ -85,7 +90,6 @@ def main() -> None:
         num_envs=num_envs,
         device=device,
     )
-    print("Initialized `DroneCTBRController`")
 
     # Mock rate setpoints and measurements
     rate_setpoints = torch.tensor(
@@ -107,7 +111,7 @@ def main() -> None:
     print_formatted_tensor(rate_setpoints, indentation_level=2)
     print("  Rate Measurements:")
     print_formatted_tensor(rate_measurements, indentation_level=2)
-    print("  Thrust Setpoints:")
+    print("  Thrust Setpoints (per drone):")
     print_formatted_tensor(thrust_setpoints, indentation_level=2)
 
     # ----- Control state saving/loading -----
@@ -115,8 +119,13 @@ def main() -> None:
     print("-" * 29)
 
     # Run controller to modify its internal state
-    print("Running controller to modify its internal state...")
-    for _ in range(10):
+    n_init_iter = 10
+    print(
+        f"Running controller to modify its internal state for {n_init_iter} "
+        "iterations"
+    )
+
+    for _ in range(n_init_iter):
         controller_rpms = controller.compute(
             rate_measurements=rate_measurements,
             rate_setpoints=rate_setpoints,
@@ -134,7 +143,8 @@ def main() -> None:
     compare_iter = 5
     rpms_before_reload = None
 
-    print("\nRunning controller before state reload...")
+    print(f"\nRunning controller for {n_iter} iterations before state reload")
+
     for i in range(n_iter + 1):
         controller_rpms = controller.compute(
             rate_measurements=rate_measurements,
@@ -150,17 +160,21 @@ def main() -> None:
     print(f"  Controller RPMs at iteration ({n_iter}):")
     print_formatted_tensor(controller_rpms, indentation_level=2)
 
-    print("\nController final state:")
+    print(f"\nController state at iteration ({n_iter}):")
     print_formatted_controller_state(controller.get_state())
 
     # Reload controller state and recompute
     controller.load_state(init_ctbr_state)
 
-    print("\nReloading controller state with saved initial state...")
-    print("\nController loaded state:")
+    print("\nReloading controller state with saved initial state")
+    print("Controller state loaded:")
     print_formatted_controller_state(controller.get_state())
 
-    print("\nRunning controller after state reload...")
+    print(
+        f"\nRunning controller after state reload for {compare_iter} "
+        "iterations"
+    )
+
     for _ in range(compare_iter + 1):
         controller_rpms = controller.compute(
             rate_measurements=rate_measurements,
@@ -193,6 +207,8 @@ def main() -> None:
     print("\nController state after reset:")
     print_formatted_controller_state(controller.get_state())
 
+    print("\nCTBR controller example terminated.")
+
 
 def print_formatted_tensor(
     data_tensor: torch.Tensor, indentation_level: int = 0
@@ -211,12 +227,12 @@ def print_formatted_tensor(
 def print_formatted_controller_state(
     ctrl_state: VectorizedControllerState,
 ) -> None:
-    print("VectorizedControllerState(")
-    print("  integral:")
-    print_formatted_tensor(ctrl_state.integral, indentation_level=2)
-    print("  prev_error:")
-    print_formatted_tensor(ctrl_state.prev_error, indentation_level=2)
-    print(")")
+    print("  VectorizedControllerState(")
+    print("    integral:")
+    print_formatted_tensor(ctrl_state.integral, indentation_level=3)
+    print("    prev_error:")
+    print_formatted_tensor(ctrl_state.prev_error, indentation_level=3)
+    print("  )")
 
 
 if __name__ == "__main__":
