@@ -128,6 +128,7 @@ def worker_data_driven_mpc(
             average_rmse_from_runs = []
             total_n_successful_runs = 0
             num_setpoints_per_run = len(eval_params.eval_setpoints)
+            num_eval_runs = num_setpoints_per_run * num_collections_per_N
 
             for i, entry_idx in enumerate(init_data_entry_indices):
                 logger.info(
@@ -160,6 +161,7 @@ def worker_data_driven_mpc(
                     combination_params=combination_params,
                     fixed_params=fixed_params,
                     eval_params=eval_params,
+                    progress=progress,
                 )
 
                 # Store the average RMSE from the current evaluation run
@@ -170,6 +172,15 @@ def worker_data_driven_mpc(
                 if status == CtrlEvalStatus.FAILURE:
                     combination_succeeded = False
                     total_n_successful_runs += result["n_successful_runs"]
+
+                    # Increment the grid search progress by the number
+                    # of remaining evaluation runs that won't be executed
+                    # due to failure
+                    with progress.get_lock():
+                        progress.value += (
+                            num_eval_runs - total_n_successful_runs
+                        )
+
                     break
                 else:
                     total_n_successful_runs += num_setpoints_per_run
@@ -216,10 +227,6 @@ def worker_data_driven_mpc(
                         "error": str(e),
                     }
                 )
-
-        # Update global progress bar
-        with progress.get_lock():
-            progress.value += 1
 
     # Signal task completion to main process
     env_reset_queue.put(

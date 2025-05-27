@@ -158,12 +158,17 @@ def parallel_grid_search(
     logger.info("[MAIN] Started env stepping")
 
     total_combinations = len(parameter_combinations)
+    total_eval_runs = (
+        total_combinations
+        * len(eval_params.eval_setpoints)
+        * eval_params.num_collections_per_N
+    )
     done_processes = 0  # Track how many processes have finished
     action_buffer = torch.zeros(
         (env.num_envs, env.num_actions), device=env.device, dtype=torch.float
     )
 
-    with tqdm(total=total_combinations) as global_pbar:
+    with tqdm(total=total_eval_runs) as global_pbar:
         while any(p.is_alive() for p in processes):
             # Update global progress bar
             with lock:
@@ -293,8 +298,9 @@ def update_global_progress_bar(
     global_progres_bar.n = global_progress_value
     available_mem_percent = get_available_memory_percent()
     global_progres_bar.desc = (
-        f"Global Progress - {n_successful_results}/{total_combinations} "
-        f"Successful - Available RAM: {available_mem_percent:.2f}%"
+        f"Progress: {n_successful_results}/{total_combinations} "
+        "successful combinations | Available RAM: "
+        f"{available_mem_percent:2.2f}%"
     )
 
     global_progres_bar.refresh()

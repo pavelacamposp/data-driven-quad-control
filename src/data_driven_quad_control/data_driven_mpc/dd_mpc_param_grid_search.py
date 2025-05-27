@@ -383,10 +383,18 @@ def main() -> None:
 
     if verbose:
         total_combinations = len(parameter_combinations)
+        num_eval_runs_per_comb = (
+            len(eval_params.eval_setpoints) * eval_params.num_collections_per_N
+        )
+        total_eval_runs = total_combinations * num_eval_runs_per_comb
 
         print(
             f"Starting parameter grid search with {total_combinations} "
             "combinations"
+        )
+        print(
+            f"  Total number of evaluation runs: {total_eval_runs} ("
+            f"{num_eval_runs_per_comb} runs per combination)"
         )
 
         if verbose > 1:
@@ -403,7 +411,7 @@ def main() -> None:
 
     logger.info(
         f"Starting parameter grid search with {len(parameter_combinations)} "
-        "combinations"
+        f"combinations - {total_eval_runs} total evaluation runs"
     )
 
     try:

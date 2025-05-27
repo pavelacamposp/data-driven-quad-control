@@ -11,6 +11,7 @@ closed-loop simulation.
 
 import logging
 import math
+from multiprocessing.sharedctypes import Synchronized
 from typing import Any
 
 import numpy as np
@@ -51,6 +52,7 @@ def evaluate_dd_mpc_controller_combination(
     combination_params: DDMPCCombinationParams,
     fixed_params: DDMPCFixedParams,
     eval_params: DDMPCEvaluationParams,
+    progress: Synchronized,
 ) -> tuple[CtrlEvalStatus, dict[str, Any]]:
     """
     Evaluate a data-driven MPC parameter combination based on the position
@@ -102,6 +104,7 @@ def evaluate_dd_mpc_controller_combination(
         eval_params (DDMPCEvaluationParams): The parameters that define the
             evaluation procedure for each controller parameter combination in
             the grid search.
+        progress (Synchronized): The shared grid search progress tracker.
 
     Returns:
         tuple[CtrlEvalStatus, dict[str, Any]]: A tuple containing:
@@ -166,6 +169,11 @@ def evaluate_dd_mpc_controller_combination(
             )
 
             rmse_values.append(rmse)
+
+            # Increment the grid search progress by 1
+            # if the evaluation completed successfully
+            with progress.get_lock():
+                progress.value += 1
 
         except Exception as e:
             logger.exception(f"[Process {env_idx}] Exception in evaluation")

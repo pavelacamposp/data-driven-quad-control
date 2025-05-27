@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -34,20 +35,33 @@ def test_worker_data_driven_mpc(
     test_fixed_params: DDMPCFixedParams,
     test_eval_params: DDMPCEvaluationParams,
 ) -> None:
-    # Mock controller return value from
+    # Mock controller evaluation from
     # `evaluate_dd_mpc_controller_combination`
     success_return = {"success": True, "average_RMSE": 1.0}
-    failure_return = {"success": False, "average_RMSE": float(np.nan)}
-    if eval_succeeded:
-        mock_evaluate_controller.return_value = (
-            CtrlEvalStatus.SUCCESS,
-            success_return,
-        )
-    else:
-        mock_evaluate_controller.return_value = (
-            CtrlEvalStatus.FAILURE,
-            failure_return,
-        )
+    failure_return = {
+        "success": False,
+        "n_successful_runs": 0,
+        "average_RMSE": float(np.nan),
+    }
+
+    def evaluate_controller_side_effect(*args: Any, **kwargs: Any) -> Any:
+        progress = kwargs["progress"]
+
+        if eval_succeeded:
+            with progress.get_lock():
+                progress.value += 1
+
+            return (
+                CtrlEvalStatus.SUCCESS,
+                success_return,
+            )
+        else:
+            return (
+                CtrlEvalStatus.FAILURE,
+                failure_return,
+            )
+
+    mock_evaluate_controller.side_effect = evaluate_controller_side_effect
 
     # Create test parameters
     process_id = 0
@@ -89,8 +103,12 @@ def test_worker_data_driven_mpc(
         assert len(dummy_failed_results) == 1
         np.testing.assert_equal(dummy_failed_results[0], failure_return)
 
-    # Verify that the progress value increased
-    assert dummy_progress.value == 1, "Worker did not increment progress value"
+    # Verify that the progress value increased by the number of evaluation runs
+    num_eval_runs = (
+        len(test_eval_params.eval_setpoints)
+        * test_eval_params.num_collections_per_N
+    )
+    assert dummy_progress.value == num_eval_runs
 
     # Verify process sent a task completion signal through the env reset queue
     reset_signal = dummy_env_reset_queue.get()

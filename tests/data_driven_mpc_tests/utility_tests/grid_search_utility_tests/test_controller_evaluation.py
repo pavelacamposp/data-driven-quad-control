@@ -81,6 +81,7 @@ def test_evaluate_dd_mpc_controller_combination(
     u_N = np_random.uniform(-1.0, 1.0, (N, m))
     y_N = np.ones((N, p))
     dummy_queue: mp.Queue = mp.Queue()
+    dummy_progress = mp.Value("i", 0)
 
     # Evaluate the controller combination with mocked controller logic
     status, result = evaluate_dd_mpc_controller_combination(
@@ -95,6 +96,7 @@ def test_evaluate_dd_mpc_controller_combination(
         combination_params=test_combination_params,
         fixed_params=test_fixed_params,
         eval_params=test_eval_params,
+        progress=dummy_progress,
     )
 
     # Verify that the evaluation was successful and returned the expected RMSE

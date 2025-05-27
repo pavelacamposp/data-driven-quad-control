@@ -107,6 +107,21 @@ def write_results_to_file(
         write_dd_mpc_grid_search_params_to_file(f, param_grid)
         f.write("\n")
 
+        # Write grid search evaluation summary
+        total_combinations = get_num_combinations_from_grid(param_grid)
+        num_eval_runs_per_comb = (
+            len(eval_params.eval_setpoints) * eval_params.num_collections_per_N
+        )
+        total_eval_runs = total_combinations * num_eval_runs_per_comb
+
+        f.write("Grid Search summary:\n")
+        f.write(f"  Total parameter combinations: {total_combinations}\n")
+        f.write(f"  Total evaluation runs: {total_eval_runs}\n")
+        f.write(
+            f"  Evaluation runs per combination: {num_eval_runs_per_comb}\n"
+        )
+        f.write("\n")
+
         # Write separate sections for successful and failed evaluation results
         total_searches = sum(len(v) for v in results.values())
 
@@ -215,3 +230,11 @@ def format_result_dict(result: dict[str, Any]) -> str:
             formatted[key] = value
 
     return ", ".join(f"{key}={value}" for key, value in formatted.items())
+
+
+def get_num_combinations_from_grid(param_grid: DDMPCParameterGrid) -> int:
+    num_combinations = math.prod(
+        len(getattr(param_grid, field)) for field in param_grid._fields
+    )
+
+    return num_combinations
