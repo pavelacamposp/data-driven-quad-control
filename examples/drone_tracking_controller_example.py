@@ -87,6 +87,13 @@ def main() -> None:
     env_cfg["visualize_target"] = True
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
+    # Expand spatial bounds to provide enough space for running
+    # the tracking controller simulation
+    env_cfg["termination_if_close_to_ground"] = 0.0
+    env_cfg["termination_if_x_greater_than"] = 10.0
+    env_cfg["termination_if_y_greater_than"] = 10.0
+    env_cfg["termination_if_z_greater_than"] = 10.0
+
     # Create environment
     action_type = ENV_ACTION_TYPES_MAP[action_type]
 
