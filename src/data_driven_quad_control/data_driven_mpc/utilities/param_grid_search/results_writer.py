@@ -189,10 +189,10 @@ def write_result_section(
     f.write(f"{title} ({len(sorted_results)}/{total_searches}):\n")
 
     if not sorted_results:
-        f.write("    No results for any parameter combination.\n")
+        f.write("  No results for any parameter combination.\n")
     else:
         for result in sorted_results:
-            f.write(f"    {format_result_dict(result)}\n")
+            f.write(f"  {format_result_dict(result)}\n")
 
 
 def format_result_dict(result: dict[str, Any]) -> str:
