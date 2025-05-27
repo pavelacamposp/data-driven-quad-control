@@ -116,7 +116,7 @@ def cache_initial_data_and_states(
     for N_value_index, N in enumerate(N_values):
         if verbose:
             print(
-                f"    [{N_value_index + 1}/{total_N_values}] Collecting "
+                f"  [{N_value_index + 1}/{total_N_values}] Collecting "
                 f"initial input-output data and saving drone states (N = {N})"
             )
 
@@ -124,7 +124,7 @@ def cache_initial_data_and_states(
         for gen_index in range(num_collections_per_N):
             if verbose:
                 print(
-                    f"      Data collection entry {gen_index + 1} of "
+                    f"    - Data collection entry {gen_index + 1} of "
                     f"{num_collections_per_N}"
                 )
 

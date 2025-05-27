@@ -227,7 +227,7 @@ def main() -> None:
 
         if debug:
             print("Debug logging enabled")
-            print(f"    Logging debug output to: {LOG_FILENAME}")
+            print(f"  Logging debug output to: {LOG_FILENAME}")
 
     logger.info("[DD-MPC-GS] Started parallel grid search execution")
 
@@ -245,7 +245,7 @@ def main() -> None:
         print("Initializing Genesis simulator")
 
         if verbose > 1 and seed is not None:
-            print(f"    RNG seed: {seed}")
+            print(f"  RNG seed: {seed}")
 
     logger.info("[DD-MPC-GS] Initializing Genesis simulator")
 
@@ -394,14 +394,12 @@ def main() -> None:
             alpha_reg_type = fixed_params.alpha_reg_type
             n_n_mpc_step = fixed_params.n_n_mpc_step
 
-            print("    Grid Search conducted over the following parameters:")
+            print("  Grid Search conducted over the following parameters:")
             for key, values in param_grid._asdict().items():
-                print(f"        {key}: {values}")
-            print(
-                f"    Extended output and input increments: {ext_out_incr_in}"
-            )
-            print(f"    Alpha regularization type: {alpha_reg_type.name}")
-            print(f"    n-step Data-Driven MPC: {n_n_mpc_step}")
+                print(f"    {key}: {values}")
+            print(f"  Extended output and input increments: {ext_out_incr_in}")
+            print(f"  Alpha regularization type: {alpha_reg_type.name}")
+            print(f"  n-step Data-Driven MPC: {n_n_mpc_step}")
 
     logger.info(
         f"Starting parameter grid search with {len(parameter_combinations)} "

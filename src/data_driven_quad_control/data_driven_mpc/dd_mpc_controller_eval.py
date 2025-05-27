@@ -137,7 +137,7 @@ def main() -> None:
         print("Initializing Genesis simulator")
 
         if verbose > 1 and seed is not None:
-            print(f"    RNG seed: {seed}")
+            print(f"  RNG seed: {seed}")
 
     gs.init(seed=seed, backend=gs.gpu, logging_level="warning")
 

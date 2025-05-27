@@ -61,7 +61,7 @@ def load_dd_mpc_grid_search_params(
 
     if verbose > 1:
         print(
-            "    Parameters for the nonlinear data-driven MPC parameter grid "
+            "  Parameters for the nonlinear data-driven MPC parameter grid "
             f"search loaded from {config_path}"
         )
 
