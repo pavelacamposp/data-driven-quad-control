@@ -159,7 +159,7 @@ def parallel_grid_search(
 
     total_tasks = len(parameter_combinations)
     done_processes = 0  # Track how many processes have finished
-    actions_buffer = torch.zeros(
+    action_buffer = torch.zeros(
         (env.num_envs, env.num_actions), device=env.device, dtype=torch.float
     )
 
@@ -217,7 +217,7 @@ def parallel_grid_search(
             logger.info("[MAIN] Reached env step point")
 
             # Get actions from action queue for each process
-            actions_buffer.zero_()
+            action_buffer.zero_()
             for _ in range(active_processes):
                 env_idx, action = action_queue.get()
 
@@ -229,11 +229,11 @@ def parallel_grid_search(
                 action = torch.tensor(action, device=env.device).unsqueeze(0)
 
                 # Store action in action buffer at its corresponding env idx
-                actions_buffer[env_idx] = action
+                action_buffer[env_idx] = action
 
             # Calculate env action by scaling actions to a [-1, 1] range
-            actions_buffer = linear_interpolate(
-                x=actions_buffer,
+            action_buffer = linear_interpolate(
+                x=action_buffer,
                 x_min=env_action_bounds[:, 0],
                 x_max=env_action_bounds[:, 1],
                 y_min=-1,
@@ -243,7 +243,7 @@ def parallel_grid_search(
             # Step environment only if there are active processes
             if active_processes > 0:
                 # Step using batched actions
-                env.step(actions_buffer)
+                env.step(action_buffer)
 
                 # Get environment observations
                 # Note: We only "observe" the non-normalized drone's
