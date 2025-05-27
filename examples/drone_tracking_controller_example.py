@@ -54,9 +54,9 @@ def parse_args() -> argparse.Namespace:
         help="The environment action type.",
     )
     parser.add_argument(
-        "--add_noise",
+        "--target_pos_noise",
         action="store_true",
-        help="Add noise to target positions.",
+        help="Enable the addition of noise to target positions.",
     )
     parser.add_argument(
         "--headless", action="store_true", help="Disable GUI viewer."
@@ -69,7 +69,7 @@ def main() -> None:
     args = parse_args()
     num_envs = args.num_envs
     action_type = args.action_type
-    add_noise = args.add_noise
+    target_pos_noise = args.target_pos_noise
     headless = args.headless
 
     print("--- Drone Tracking Controller Example ---")
@@ -172,7 +172,7 @@ def main() -> None:
         target_yaw = target_yaw_tensor.expand(num_envs)
 
         # Add noise to target positions to show independent control behavior
-        if add_noise:
+        if target_pos_noise:
             target_pos += 2 * noise_scale * (torch.rand_like(target_pos) - 0.5)
             target_pos[:, 2] = torch.clamp(target_pos[:, 2], min=0.2, max=1.9)
             print("         * Added target position noise")
