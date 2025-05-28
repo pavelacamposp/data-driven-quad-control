@@ -9,7 +9,6 @@ nonlinear data-driven MPC controllers. It is designed to work with the
 
 import numpy as np
 import torch
-import yaml
 from direct_data_driven_mpc.utilities.models.nonlinear_model import (
     NonlinearSystem,
 )
@@ -23,6 +22,7 @@ from data_driven_quad_control.controllers.tracking.tracking_controller_config im
 )
 from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.envs.hover_env_config import EnvActionType
+from data_driven_quad_control.utilities.config_utils import load_yaml_config
 from data_driven_quad_control.utilities.math_utils import (
     linear_interpolate,
     yaw_to_quaternion,
@@ -110,11 +110,6 @@ def collect_initial_input_output_data(
     # Initialize current drone state
     current_state = TrackingCtrlDroneState(X=env.base_pos, Q=env.base_quat)
 
-    # Initialize control command buffer for vectorized env
-    actions_buffer = torch.zeros(
-        (env.num_envs, env.num_actions), dtype=torch.float, device=env.device
-    )
-
     # Retrieve env action bounds from env
     env_action_bounds = env.action_bounds
 
@@ -149,29 +144,33 @@ def collect_initial_input_output_data(
                 ctrl_ctbr_cmd = ctrl_ctbr_cmd[:, :-1]
 
             # Add persistently exciting input as a perturbation to the
-            # stabilizing input for input-output data generation
+            # stabilizing input for the the `base_env_idx` env action
+            # Note:
+            # The input used for collecting output data is the sum
+            # of the stabilizing controller commands and the persistently
+            # exciting input.
             controller_action_base = ctrl_ctbr_cmd[base_env_idx]
             u_N[k, :] += controller_action_base.squeeze(0).cpu().numpy()
 
             # Clip control input to control input bounds
             u_N[k, :] = u_N[k, :].clip(input_bounds[:, 0], input_bounds[:, 1])
 
-            # Calculate env action by scaling control input to a [-1, 1] range
-            control_action = torch.tensor(
-                u_N[k, :], dtype=torch.float, device=env.device
-            ).unsqueeze(0)
+            # Update controller commands for the `base_env_idx` env
+            # with the generated persistently exciting input
+            ctrl_ctbr_cmd[base_env_idx] = torch.from_numpy(u_N[k : k + 1]).to(
+                env.device
+            )
 
+            # Calculate env action by scaling the CTBR controller
+            # commands to a [-1, 1] range
             env_action = linear_interpolate(
-                x=control_action,
+                x=ctrl_ctbr_cmd,
                 x_min=env_action_bounds[:, 0],
                 x_max=env_action_bounds[:, 1],
                 y_min=-1,
                 y_max=1,
             )
             env_action = torch.clamp(env_action, -1, 1)
-
-            # Update base env action
-            actions_buffer[base_env_idx] = env_action
 
             # Step environment
             if use_system_model:
@@ -182,7 +181,7 @@ def collect_initial_input_output_data(
                     u=u_N[k, :], w=w_N[k, :]
                 )
             else:
-                env.step(actions_buffer)
+                env.step(env_action)
 
                 # Get system output (drone position)
                 y_N[k, :] = env.base_pos[base_env_idx].cpu().numpy()
@@ -207,8 +206,7 @@ def get_init_hover_pos(
     Returns:
         torch.Tensor: The initial hover position with shape (3,).
     """
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
+    config = load_yaml_config(config_path)
 
     hover_pos_list = config[controller_key_value]["init_hover_pos"]
     init_hover_pos = torch.tensor(

@@ -157,13 +157,18 @@ def parallel_grid_search(
     # Step environment in the main process
     logger.info("[MAIN] Started env stepping")
 
-    total_tasks = len(parameter_combinations)
+    total_combinations = len(parameter_combinations)
+    total_eval_runs = (
+        total_combinations
+        * len(eval_params.eval_setpoints)
+        * eval_params.num_collections_per_N
+    )
     done_processes = 0  # Track how many processes have finished
-    actions_buffer = torch.zeros(
+    action_buffer = torch.zeros(
         (env.num_envs, env.num_actions), device=env.device, dtype=torch.float
     )
 
-    with tqdm(total=total_tasks) as global_pbar:
+    with tqdm(total=total_eval_runs) as global_pbar:
         while any(p.is_alive() for p in processes):
             # Update global progress bar
             with lock:
@@ -171,7 +176,7 @@ def parallel_grid_search(
                     global_progres_bar=global_pbar,
                     global_progress_value=global_progress.value,
                     n_successful_results=len(successful_results),
-                    total_tasks=total_tasks,
+                    total_combinations=total_combinations,
                 )
 
             # Update number of active processes
@@ -201,8 +206,9 @@ def parallel_grid_search(
                 # Restore env_idx drone state to the state immediately after
                 # the initial input-output measurement for parameter N
                 if reset_signal.reset:
-                    assert reset_signal.N is not None
-                    initial_drone_state = drone_state_cache[reset_signal.N]
+                    data_entry_idx = reset_signal.data_entry_idx
+                    assert data_entry_idx is not None
+                    initial_drone_state = drone_state_cache[data_entry_idx]
                     restore_env_from_state(
                         env=env,
                         env_idx=reset_signal.env_idx,
@@ -217,7 +223,7 @@ def parallel_grid_search(
             logger.info("[MAIN] Reached env step point")
 
             # Get actions from action queue for each process
-            actions_buffer.zero_()
+            action_buffer.zero_()
             for _ in range(active_processes):
                 env_idx, action = action_queue.get()
 
@@ -229,11 +235,11 @@ def parallel_grid_search(
                 action = torch.tensor(action, device=env.device).unsqueeze(0)
 
                 # Store action in action buffer at its corresponding env idx
-                actions_buffer[env_idx] = action
+                action_buffer[env_idx] = action
 
             # Calculate env action by scaling actions to a [-1, 1] range
-            actions_buffer = linear_interpolate(
-                x=actions_buffer,
+            action_buffer = linear_interpolate(
+                x=action_buffer,
                 x_min=env_action_bounds[:, 0],
                 x_max=env_action_bounds[:, 1],
                 y_min=-1,
@@ -243,7 +249,7 @@ def parallel_grid_search(
             # Step environment only if there are active processes
             if active_processes > 0:
                 # Step using batched actions
-                env.step(actions_buffer)
+                env.step(action_buffer)
 
                 # Get environment observations
                 # Note: We only "observe" the non-normalized drone's
@@ -287,13 +293,14 @@ def update_global_progress_bar(
     global_progres_bar: tqdm,
     global_progress_value: int,
     n_successful_results: int,
-    total_tasks: int,
+    total_combinations: int,
 ) -> None:
     global_progres_bar.n = global_progress_value
     available_mem_percent = get_available_memory_percent()
     global_progres_bar.desc = (
-        f"Global Progress - {n_successful_results}/{total_tasks} "
-        f"Successful - Available RAM: {available_mem_percent:.2f}%"
+        f"Progress: {n_successful_results}/{total_combinations} "
+        "successful combinations | Available RAM: "
+        f"{available_mem_percent:2.2f}%"
     )
 
     global_progres_bar.refresh()

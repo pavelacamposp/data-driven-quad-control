@@ -6,12 +6,12 @@ from enum import Enum
 from typing import Any, Optional
 
 import torch
-import yaml
 
 from data_driven_quad_control.controllers.ctbr.ctbr_controller_config import (
     CTBRControllerConfig,
 )
 from data_driven_quad_control.drone_config.drone_params import DroneParams
+from data_driven_quad_control.utilities.config_utils import load_yaml_config
 from data_driven_quad_control.utilities.vectorized_pid_controller import (
     VectorizedControllerState,
 )
@@ -25,11 +25,6 @@ CTBR_CONTROLLER_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
     "../../../configs/controllers/ctbr/ctbr_controller_params.yaml",
 )
-
-
-def load_yaml_config(path: str) -> Any:
-    with open(path, "r") as file:
-        return yaml.safe_load(file)
 
 
 # Drone environment configuration

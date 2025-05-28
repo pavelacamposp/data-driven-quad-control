@@ -47,6 +47,7 @@ class DDMPCEvaluationParams(NamedTuple):
     eval_time_steps: int
     eval_setpoints: list[np.ndarray]
     max_target_dist_increment: float
+    num_collections_per_N: int
 
 
 class DDMPCCombinationParams(NamedTuple):
@@ -90,11 +91,20 @@ DDMPCGridSearchParams = tuple[
 class DataDrivenCache(NamedTuple):
     """
     Cache of initial input-output measurements used for creating Data-Driven
-    MPC controllers, and the corresponding drone environment state obtained
-    after collection. Entries are grouped by an integer key, which corresponds
-    to the input-output trajectory length used for measurements.
+    MPC controllers, and the corresponding drone environment states obtained
+    after data collection.
+
+    Entries are indexed by a unique integer key (e.g., the entry indices from
+    the data collection process). The actual trajectory length used for each
+    entry is stored separately in `N`.
+
+    The `N_to_entry_indices` field maps each trajectory length (`N`) to the
+    list of entry indices corresponding to the data collected for that length.
+    This allows multiple data entries per `N` value.
     """
 
+    N_to_entry_indices: dict[int, list[int]]
+    N: dict[int, int]
     u_N: dict[int, np.ndarray]
     y_N: dict[int, np.ndarray]
     drone_state: dict[int, EnvState]
@@ -135,11 +145,12 @@ class EnvResetSignal(NamedTuple):
         env_idx (int): The index of the environment instance (worker).
         reset (bool): Indicates whether the environment should be reset.
         done (bool): Indicates whether the worker has finished all evaluations.
-        N (int | None): The input-output trajectory length associated with the
-            evaluation. Not required when signaling task completion.
+        data_entry_idx (int): The entry index of the input-output data
+            associated with the evaluation. Not required when signaling task
+            completion.
     """
 
     env_idx: int
     reset: bool
     done: bool
-    N: int | None
+    data_entry_idx: int | None

@@ -36,7 +36,7 @@ def test_parallel_grid_search(
     test_drone_state_cache: dict[int, EnvState],
 ) -> None:
     # Patch worker to mimic expected queue behavior
-    N = test_combination_params.N
+    data_entry_idx = 0
 
     def dummy_worker(*args: Any, **kwargs: Any) -> None:
         process_id = args[0]
@@ -49,7 +49,9 @@ def test_parallel_grid_search(
         # Mock controller closed-loop simulation
         # Send reset signal to reset the drone environment
         # for the `process_id` env index
-        env_reset_queue.put(EnvResetSignal(process_id, True, False, N))
+        env_reset_queue.put(
+            EnvResetSignal(process_id, True, False, data_entry_idx)
+        )
 
         # Send dummy action and get dummy observation
         # (mock controller simulation)
@@ -57,7 +59,9 @@ def test_parallel_grid_search(
         observation_queue.get()
 
         # Send reset signal to continue env stepping
-        env_reset_queue.put(EnvResetSignal(process_id, False, False, N))
+        env_reset_queue.put(
+            EnvResetSignal(process_id, False, False, data_entry_idx)
+        )
 
         # Send dummy action and get dummy observation
         # (mock controller simulation)

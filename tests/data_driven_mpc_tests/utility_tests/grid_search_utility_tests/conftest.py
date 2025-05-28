@@ -75,6 +75,7 @@ def test_eval_params() -> DDMPCEvaluationParams:
         eval_time_steps=1,
         eval_setpoints=[np.array([0.0, 0.0, 1.5])],
         max_target_dist_increment=0.5,
+        num_collections_per_N=2,
     )
 
 
@@ -98,14 +99,17 @@ def test_drone_state() -> EnvState:
 @pytest.fixture
 def test_data_driven_cache(test_drone_state: EnvState) -> DataDrivenCache:
     return DataDrivenCache(
-        u_N={40: np.zeros((40, 3))},
-        y_N={40: np.zeros((40, 3))},
-        drone_state={40: test_drone_state},
+        N_to_entry_indices={40: [0, 1]},
+        N={0: 40, 1: 40},
+        u_N={0: np.zeros((40, 3)), 1: np.zeros((40, 3))},
+        y_N={0: np.zeros((40, 3)), 1: np.zeros((40, 3))},
+        drone_state={0: test_drone_state, 1: test_drone_state},
     )
 
 
 @pytest.fixture
 def test_drone_state_cache(test_drone_state: EnvState) -> dict[int, EnvState]:
     return {
-        40: test_drone_state,
+        0: test_drone_state,
+        1: test_drone_state,
     }

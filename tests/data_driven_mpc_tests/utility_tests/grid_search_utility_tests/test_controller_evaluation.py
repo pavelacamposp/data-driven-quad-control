@@ -81,10 +81,12 @@ def test_evaluate_dd_mpc_controller_combination(
     u_N = np_random.uniform(-1.0, 1.0, (N, m))
     y_N = np.ones((N, p))
     dummy_queue: mp.Queue = mp.Queue()
+    dummy_progress = mp.Value("i", 0)
 
     # Evaluate the controller combination with mocked controller logic
     status, result = evaluate_dd_mpc_controller_combination(
         env_idx=0,
+        data_entry_idx=0,
         u_N=u_N,
         y_N=y_N,
         initial_drone_state=test_drone_state,
@@ -94,6 +96,7 @@ def test_evaluate_dd_mpc_controller_combination(
         combination_params=test_combination_params,
         fixed_params=test_fixed_params,
         eval_params=test_eval_params,
+        progress=dummy_progress,
     )
 
     # Verify that the evaluation was successful and returned the expected RMSE
@@ -138,6 +141,7 @@ def test_isolated_controller_evaluation(
     # controller creation and simulation logic
     rmse = isolated_controller_evaluation(
         env_idx=0,
+        data_entry_idx=0,
         u_N=u_N,
         y_N=y_N,
         y_r=y_r,
@@ -166,6 +170,7 @@ def test_sim_nonlinear_dd_mpc_control_loop_parallel(
 ) -> None:
     # Create test parameters
     env_idx = 0
+    data_entry_idx = 123
     dummy_controller = MockNonlinearDDMPCController()
     dummy_env_reset_queue: mp.Queue = mp.Queue()
     dummy_action_queue: mp.Queue = mp.Queue()
@@ -179,6 +184,7 @@ def test_sim_nonlinear_dd_mpc_control_loop_parallel(
     # Simulation control loop with mocked controller and observation queue data
     rmse = sim_nonlinear_dd_mpc_control_loop_parallel(
         env_idx=env_idx,
+        data_entry_idx=data_entry_idx,
         env_reset_queue=dummy_env_reset_queue,
         action_queue=dummy_action_queue,
         observation_queue=dummy_observation_queue,
@@ -199,7 +205,7 @@ def test_sim_nonlinear_dd_mpc_control_loop_parallel(
     assert reset_signal.env_idx == env_idx
     assert isinstance(reset_signal.reset, bool)
     assert isinstance(reset_signal.done, bool)
-    assert reset_signal.N == dummy_controller.N
+    assert reset_signal.data_entry_idx == data_entry_idx
 
     # Verify action queue data
     received_env_idx, action = dummy_action_queue.get()

@@ -11,6 +11,7 @@ closed-loop simulation.
 
 import logging
 import math
+from multiprocessing.sharedctypes import Synchronized
 from typing import Any
 
 import numpy as np
@@ -41,6 +42,7 @@ logger = logging.getLogger(__name__)
 
 def evaluate_dd_mpc_controller_combination(
     env_idx: int,
+    data_entry_idx: int,
     u_N: np.ndarray,
     y_N: np.ndarray,
     initial_drone_state: EnvState,
@@ -50,6 +52,7 @@ def evaluate_dd_mpc_controller_combination(
     combination_params: DDMPCCombinationParams,
     fixed_params: DDMPCFixedParams,
     eval_params: DDMPCEvaluationParams,
+    progress: Synchronized,
 ) -> tuple[CtrlEvalStatus, dict[str, Any]]:
     """
     Evaluate a data-driven MPC parameter combination based on the position
@@ -75,6 +78,8 @@ def evaluate_dd_mpc_controller_combination(
     Args:
         env_idx (int): The environment instance (drone) index selected for
             evaluation.
+        data_entry_idx (int): The index of the collected initial input-output
+            data entry in the data-driven cache.
         u_N (np.ndarray): An array of shape `(N, m)` representing a
             persistently exciting input sequence used for output data
             collection. `N` is the trajectory length and `m` is the number of
@@ -99,6 +104,7 @@ def evaluate_dd_mpc_controller_combination(
         eval_params (DDMPCEvaluationParams): The parameters that define the
             evaluation procedure for each controller parameter combination in
             the grid search.
+        progress (Synchronized): The shared grid search progress tracker.
 
     Returns:
         tuple[CtrlEvalStatus, dict[str, Any]]: A tuple containing:
@@ -147,6 +153,7 @@ def evaluate_dd_mpc_controller_combination(
             rmse = run_in_isolated_process(
                 target_func=isolated_controller_evaluation,
                 env_idx=env_idx,
+                data_entry_idx=data_entry_idx,
                 u_N=u_N,
                 y_N=y_N,
                 y_r=y_r,
@@ -163,6 +170,11 @@ def evaluate_dd_mpc_controller_combination(
 
             rmse_values.append(rmse)
 
+            # Increment the grid search progress by 1
+            # if the evaluation completed successfully
+            with progress.get_lock():
+                progress.value += 1
+
         except Exception as e:
             logger.exception(f"[Process {env_idx}] Exception in evaluation")
 
@@ -171,12 +183,14 @@ def evaluate_dd_mpc_controller_combination(
             # Send dummy values to and retrieve data from queues if the
             # environment simulation was interrupted to prevent deadlocks and
             # ensure synchronized communication with the main process
-            N = combination_params.N
             m = fixed_params.m
             if env_sim_info.sim_step_progress == 0:
                 env_reset_queue.put(
                     EnvResetSignal(
-                        env_idx=env_idx, reset=False, done=False, N=N
+                        env_idx=env_idx,
+                        reset=False,
+                        done=False,
+                        data_entry_idx=data_entry_idx,
                     )
                 )
                 action_queue.put((env_idx, np.zeros(m)))
@@ -222,6 +236,7 @@ def evaluate_dd_mpc_controller_combination(
 
 def isolated_controller_evaluation(
     env_idx: int,
+    data_entry_idx: int,
     u_N: np.ndarray,
     y_N: np.ndarray,
     y_r: np.ndarray,
@@ -255,6 +270,7 @@ def isolated_controller_evaluation(
 
     rmse = sim_nonlinear_dd_mpc_control_loop_parallel(
         env_idx=env_idx,
+        data_entry_idx=data_entry_idx,
         env_reset_queue=env_reset_queue,
         action_queue=action_queue,
         observation_queue=observation_queue,
@@ -271,6 +287,7 @@ def isolated_controller_evaluation(
 
 def sim_nonlinear_dd_mpc_control_loop_parallel(
     env_idx: int,
+    data_entry_idx: int,
     env_reset_queue: mp.Queue,
     action_queue: mp.Queue,
     observation_queue: mp.Queue,
@@ -279,7 +296,7 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
     fixed_params: DDMPCFixedParams,
     num_steps: int,
     initial_distance: float,
-    max_target_dist_increment: float,
+    max_target_dist_increment: float | None = None,
 ) -> float:
     """
     Simulate a closed-loop control using a nonlinear data-driven MPC controller
@@ -299,6 +316,8 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
     Args:
         env_idx (int): The environment instance (drone) index selected for
             evaluation.
+        data_entry_idx (int): The index of the collected initial input-output
+            data entry in the data-driven cache.
         env_reset_queue (mp.Queue): The reset queue used for sending
             environment reset commands to the main process.
         action_queue (mp.Queue): The action queue used for sending control
@@ -314,16 +333,16 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
         num_steps (int): The total number of simulation steps.
         initial_distance (float): The initial distance between the drone and
             the target position.
-        max_target_dist_increment (float): The maximum allowed increment in
-            distance to the target relative to the initial distance. If
-            exceeded, the evaluation run is terminated early.
+        max_target_dist_increment (float | None): The maximum allowed increment
+            in distance to the target relative to the initial distance. If
+            exceeded, the evaluation run is terminated early. If `None`, this
+            early termination check will be disabled. Defaults to `None`.
 
     Returns:
         float: The root mean square error (RMSE) of the drone's position
             tracking performance.
     """
     n = dd_mpc_controller.n
-    N = dd_mpc_controller.N
     y_r = dd_mpc_controller.y_r
 
     # Retrieve fixed parameters
@@ -352,7 +371,7 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
                     env_idx=env_idx,
                     reset=env_sim_info.reset_state,
                     done=False,
-                    N=N,
+                    data_entry_idx=data_entry_idx,
                 )
             )
             # Set env reset status to False
@@ -402,21 +421,28 @@ def sim_nonlinear_dd_mpc_control_loop_parallel(
                 du_current=du_current,
             )
 
-            # Stop simulation by raising a ValueError if the
-            # distance from the drone to its setpoint position
-            # is greater than the initial distance
-            current_distance = np.linalg.norm(y_sys[k, :].reshape(-1, 1) - y_r)
-            if current_distance - initial_distance > max_target_dist_increment:
-                logger.warning(
-                    f"[Process {env_idx}] Drone moved too far from its "
-                    "target. Raising ValueError to terminate evaluation."
+            if max_target_dist_increment is not None:
+                # Stop simulation by raising a ValueError if the distance from
+                # the drone to its setpoint position has increased by more than
+                # `max_target_dist_increment` compared to the initial distance
+                current_distance = np.linalg.norm(
+                    y_sys[k, :].reshape(-1, 1) - y_r
                 )
 
-                raise ValueError(
-                    "Drone moved away from its target by more than "
-                    f"{max_target_dist_increment} relative to its initial "
-                    "distance."
-                )
+                if (
+                    current_distance - initial_distance
+                    > max_target_dist_increment
+                ):
+                    logger.warning(
+                        f"[Process {env_idx}] Drone moved too far from its "
+                        "target. Raising ValueError to terminate evaluation."
+                    )
+
+                    raise ValueError(
+                        "Drone moved away from its target by more than "
+                        f"{max_target_dist_increment} relative to its initial "
+                        "distance."
+                    )
 
     # Calculate target position tracking RMSE
     rmse = math.sqrt(np.mean(np.sum((y_sys - y_r.T) ** 2, axis=1)))

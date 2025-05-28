@@ -23,6 +23,11 @@ Workflow overview:
    later use. This process is repeated for each `N` value defined in the
    parameter grid.
 
+   For each `N`, data collection is repeated `num_collections_per_N` times
+   (as specified in the configuration file) to enable controller evaluations
+   with different initial data entries. This allows indirect validation of
+   controller robustness based on their performance.
+
 4. Based on the grid search configuration parameters (defined in a YAML
    configuration file), the main process of the grid search spawns multiple
    parallel worker processes. Each worker evaluates multiple unique controller
@@ -97,7 +102,7 @@ from data_driven_quad_control.utilities.drone_tracking_controller import (
     hover_at_target,
 )
 
-from .utilities.param_grid_search.grid_search_param_load import (
+from .utilities.param_grid_search.grid_search_param_loader import (
     load_dd_mpc_grid_search_params,
 )
 from .utilities.param_grid_search.initial_data_collection_cache import (
@@ -128,18 +133,24 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logger = logging.getLogger(__name__)
-
-# Directory paths
-DD_MPC_CONFIG_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "./config")
-)
+logger = logging.getLogger()
 
 # Data-Driven MPC Grid Search configuration file
 DEFAULT_DD_MPC_GRID_SEARCH_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
     "../../../configs/data_driven_mpc/dd_mpc_grid_search_params.yaml",
 )
+
+
+def disable_debug_logging() -> None:
+    """Disable logging from child loggers."""
+    logger.info(
+        "Debug logging is disabled. Run grid search with the `--debug` "
+        "argument to enable it."
+    )
+
+    for handler in logger.handlers:
+        handler.setLevel(logging.CRITICAL + 1)
 
 
 def parse_args() -> argparse.Namespace:
@@ -204,7 +215,8 @@ def main() -> None:
     debug = args.debug
 
     # Disable logger if not in debug mode
-    logger.disabled = not debug
+    if not debug:
+        disable_debug_logging()
 
     if verbose:
         print(
@@ -215,7 +227,7 @@ def main() -> None:
 
         if debug:
             print("Debug logging enabled")
-            print(f"    Logging debug output to: {LOG_FILENAME}")
+            print(f"  Logging debug output to: {LOG_FILENAME}")
 
     logger.info("[DD-MPC-GS] Started parallel grid search execution")
 
@@ -233,7 +245,7 @@ def main() -> None:
         print("Initializing Genesis simulator")
 
         if verbose > 1 and seed is not None:
-            print(f"    RNG seed: {seed}")
+            print(f"  RNG seed: {seed}")
 
     logger.info("[DD-MPC-GS] Initializing Genesis simulator")
 
@@ -345,6 +357,7 @@ def main() -> None:
         init_hovering_state=init_hovering_state,
         init_data_collection_params=init_data_collection_params,
         fixed_params=fixed_params,
+        eval_params=eval_params,
         param_grid=param_grid,
         verbose=verbose,
         np_random=np_random,
@@ -370,10 +383,18 @@ def main() -> None:
 
     if verbose:
         total_combinations = len(parameter_combinations)
+        num_eval_runs_per_comb = (
+            len(eval_params.eval_setpoints) * eval_params.num_collections_per_N
+        )
+        total_eval_runs = total_combinations * num_eval_runs_per_comb
 
         print(
             f"Starting parameter grid search with {total_combinations} "
             "combinations"
+        )
+        print(
+            f"  Total number of evaluation runs: {total_eval_runs} ("
+            f"{num_eval_runs_per_comb} runs per combination)"
         )
 
         if verbose > 1:
@@ -381,18 +402,16 @@ def main() -> None:
             alpha_reg_type = fixed_params.alpha_reg_type
             n_n_mpc_step = fixed_params.n_n_mpc_step
 
-            print("    Grid Search conducted over the following parameters:")
+            print("  Grid Search conducted over the following parameters:")
             for key, values in param_grid._asdict().items():
-                print(f"        {key}: {values}")
-            print(
-                f"    Extended output and input increments: {ext_out_incr_in}"
-            )
-            print(f"    Alpha regularization type: {alpha_reg_type.name}")
-            print(f"    n-step Data-Driven MPC: {n_n_mpc_step}")
+                print(f"    {key}: {values}")
+            print(f"  Extended output and input increments: {ext_out_incr_in}")
+            print(f"  Alpha regularization type: {alpha_reg_type.name}")
+            print(f"  n-step Data-Driven MPC: {n_n_mpc_step}")
 
     logger.info(
         f"Starting parameter grid search with {len(parameter_combinations)} "
-        "combinations"
+        f"combinations - {total_eval_runs} total evaluation runs"
     )
 
     try:
@@ -413,6 +432,7 @@ def main() -> None:
         output_file = write_results_to_file(
             output_dir=output_dir,
             elapsed_time=elapsed_time,
+            num_processes=num_processes,
             init_data_collection_params=init_data_collection_params,
             fixed_params=fixed_params,
             eval_params=eval_params,

@@ -25,6 +25,7 @@ from .param_grid_search_config import (
 def write_results_to_file(
     output_dir: str,
     elapsed_time: float,
+    num_processes: int,
     init_data_collection_params: DDMPCInitialDataCollectionParams,
     fixed_params: DDMPCFixedParams,
     eval_params: DDMPCEvaluationParams,
@@ -39,6 +40,8 @@ def write_results_to_file(
     Args:
         output_dir (str): The directory to save the summary report.
         elapsed_time (float): The grid search duration in seconds.
+        num_processes (int): The number of parallel worker processes used
+            during the grid search.
         fixed_params (DDMPCFixedParams): The fixed parameters used in the grid
             search.
         init_data_collection_params (DDMPCInitialDataCollectionParams): The
@@ -76,9 +79,12 @@ def write_results_to_file(
         hours, remaining = divmod(elapsed_time, 3600)
         minutes, seconds = divmod(remaining, 60)
         f.write(
-            f"Grid search complete in {int(hours)}h {int(minutes)}m "
-            f"{seconds:.2f}s.\n"
+            f"Grid search duration: {int(hours)}h {int(minutes)}m "
+            f"{seconds:.2f}s\n"
         )
+
+        # Write number of parallel processes used in the grid search
+        f.write(f"Number of parallel processes: {num_processes}\n")
         f.write("\n")
 
         # Write initial data collection parameter summary
@@ -99,6 +105,21 @@ def write_results_to_file(
         # Write parameter grid summary
         f.write("Grid Search conducted over the following parameters:\n")
         write_dd_mpc_grid_search_params_to_file(f, param_grid)
+        f.write("\n")
+
+        # Write grid search evaluation summary
+        total_combinations = get_num_combinations_from_grid(param_grid)
+        num_eval_runs_per_comb = (
+            len(eval_params.eval_setpoints) * eval_params.num_collections_per_N
+        )
+        total_eval_runs = total_combinations * num_eval_runs_per_comb
+
+        f.write("Grid Search summary:\n")
+        f.write(f"  Total parameter combinations: {total_combinations}\n")
+        f.write(f"  Total evaluation runs: {total_eval_runs}\n")
+        f.write(
+            f"  Evaluation runs per combination: {num_eval_runs_per_comb}\n"
+        )
         f.write("\n")
 
         # Write separate sections for successful and failed evaluation results
@@ -183,10 +204,10 @@ def write_result_section(
     f.write(f"{title} ({len(sorted_results)}/{total_searches}):\n")
 
     if not sorted_results:
-        f.write("    No results for any parameter combination.\n")
+        f.write("  No results for any parameter combination.\n")
     else:
         for result in sorted_results:
-            f.write(f"    {format_result_dict(result)}\n")
+            f.write(f"  {format_result_dict(result)}\n")
 
 
 def format_result_dict(result: dict[str, Any]) -> str:
@@ -209,3 +230,11 @@ def format_result_dict(result: dict[str, Any]) -> str:
             formatted[key] = value
 
     return ", ".join(f"{key}={value}" for key, value in formatted.items())
+
+
+def get_num_combinations_from_grid(param_grid: DDMPCParameterGrid) -> int:
+    num_combinations = math.prod(
+        len(getattr(param_grid, field)) for field in param_grid._fields
+    )
+
+    return num_combinations

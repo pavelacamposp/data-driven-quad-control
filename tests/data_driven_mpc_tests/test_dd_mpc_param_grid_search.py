@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.grid_search_param_load import (  # noqa: E501
+from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.grid_search_param_loader import (  # noqa: E501
     load_dd_mpc_grid_search_params,
 )
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.initial_data_collection_cache import (  # noqa: E501
@@ -109,8 +109,9 @@ def test_dd_mpc_param_grid_search(
         target_yaw=target_yaw,
         init_hovering_state=init_hovering_state,
         init_data_collection_params=init_data_collection_params,
-        param_grid=param_grid,
         fixed_params=fixed_params,
+        eval_params=eval_params,
+        param_grid=param_grid,
         np_random=np_random,
     )
 
@@ -138,6 +139,7 @@ def test_dd_mpc_param_grid_search(
     output_file = write_results_to_file(
         output_dir=test_output_dir,
         elapsed_time=elapsed_time,
+        num_processes=num_processes,
         init_data_collection_params=init_data_collection_params,
         fixed_params=fixed_params,
         eval_params=eval_params,
@@ -153,7 +155,8 @@ def test_dd_mpc_param_grid_search(
         output = f.read()
 
     # Verify file structure
-    assert "Grid search complete in 0h 2m 3.12s." in output
+    assert "Grid search duration: 0h 2m 3.12s" in output
+    assert f"Number of parallel processes: {num_processes}" in output
     assert "Initial data collection parameters:" in output
     assert "Fixed parameters:" in output
     assert "Evaluation parameters:" in output

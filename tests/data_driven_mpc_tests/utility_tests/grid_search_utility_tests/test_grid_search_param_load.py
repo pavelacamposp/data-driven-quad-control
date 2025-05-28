@@ -1,4 +1,4 @@
-from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.grid_search_param_load import (  # noqa: E501
+from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.grid_search_param_loader import (  # noqa: E501
     load_dd_mpc_grid_search_params,
 )
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.param_grid_search_config import (  # noqa: E501

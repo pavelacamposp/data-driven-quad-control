@@ -19,6 +19,7 @@ from multiprocessing.sharedctypes import Synchronized
 from multiprocessing.synchronize import Lock
 from queue import Empty
 
+import numpy as np
 import torch.multiprocessing as mp
 
 from .controller_evaluation import evaluate_dd_mpc_controller_combination
@@ -112,38 +113,101 @@ def worker_data_driven_mpc(
             # Get `N` from combination params
             N = combination_params.N
 
-            # Get initial input-output measurements
-            u_N = data_driven_cache.u_N[N]
-            y_N = data_driven_cache.y_N[N]
+            # Get available entry indices for this trajectory length
+            init_data_entry_indices = data_driven_cache.N_to_entry_indices[N]
+            num_collections_per_N = len(init_data_entry_indices)
 
-            # Get initial drone state
-            initial_drone_state = data_driven_cache.drone_state[N]
-
-            # Evaluate the combination
-            logger.info(f"[Worker] Entered evaluation in process {process_id}")
-
-            status, result = evaluate_dd_mpc_controller_combination(
-                env_idx=process_id,
-                u_N=u_N,
-                y_N=y_N,
-                initial_drone_state=initial_drone_state,
-                env_reset_queue=env_reset_queue,
-                action_queue=action_queue,
-                observation_queue=observation_queue,
-                combination_params=combination_params,
-                fixed_params=fixed_params,
-                eval_params=eval_params,
+            logger.info(
+                f"[Worker] Process {process_id} evaluating for "
+                f"{num_collections_per_N} collected data entries"
             )
+
+            # Evaluate the controller for every collected initial data entry
+            # for this trajectory length `N`
+            combination_succeeded = True
+            average_rmse_from_runs = []
+            total_n_successful_runs = 0
+            num_setpoints_per_run = len(eval_params.eval_setpoints)
+            num_eval_runs = num_setpoints_per_run * num_collections_per_N
+
+            for i, entry_idx in enumerate(init_data_entry_indices):
+                logger.info(
+                    f"[Worker] Process {process_id} evaluating using initial "
+                    f"data {i + 1}/{num_collections_per_N} (entry index = "
+                    f"{entry_idx})"
+                )
+
+                # Get initial input-output measurements
+                u_N = data_driven_cache.u_N[entry_idx]
+                y_N = data_driven_cache.y_N[entry_idx]
+
+                # Get initial drone state
+                initial_drone_state = data_driven_cache.drone_state[entry_idx]
+
+                # Evaluate the combination
+                logger.info(
+                    f"[Worker] Entered evaluation in process {process_id}"
+                )
+
+                status, result = evaluate_dd_mpc_controller_combination(
+                    env_idx=process_id,
+                    data_entry_idx=entry_idx,
+                    u_N=u_N,
+                    y_N=y_N,
+                    initial_drone_state=initial_drone_state,
+                    env_reset_queue=env_reset_queue,
+                    action_queue=action_queue,
+                    observation_queue=observation_queue,
+                    combination_params=combination_params,
+                    fixed_params=fixed_params,
+                    eval_params=eval_params,
+                    progress=progress,
+                )
+
+                # Store the average RMSE from the current evaluation run
+                average_rmse_from_runs.append(result["average_RMSE"])
+
+                # Mark the combination as failed if any run fails
+                # and stop the evaluation
+                if status == CtrlEvalStatus.FAILURE:
+                    combination_succeeded = False
+                    total_n_successful_runs += result["n_successful_runs"]
+
+                    # Increment the grid search progress by the number
+                    # of remaining evaluation runs that won't be executed
+                    # due to failure
+                    with progress.get_lock():
+                        progress.value += (
+                            num_eval_runs - total_n_successful_runs
+                        )
+
+                    break
+                else:
+                    total_n_successful_runs += num_setpoints_per_run
+
+            # Calculate the overall average RMSE across all runs
+            eval_average_rmse = (
+                np.nanmean(average_rmse_from_runs)
+                if len(average_rmse_from_runs) > 0
+                else np.nan
+            )
+
+            # Overwrite the average RMSE in the evaluation result
+            result["average_RMSE"] = float(eval_average_rmse)
 
             # Store results
             with lock:
-                if status == CtrlEvalStatus.SUCCESS:
+                if combination_succeeded:
                     successful_results.append(result)
                     logger.info(
                         f"[Worker] Process {process_id} succeeded with "
                         f"params: {combination_params._asdict()}."
                     )
                 else:
+                    # Overwrite the number of successful runs in
+                    # the evaluation result
+                    result["n_successful_runs"] = total_n_successful_runs
+
                     failed_result.append(result)
                     logger.error(
                         f"[Worker] Process {process_id} failed: {result}."
@@ -164,13 +228,11 @@ def worker_data_driven_mpc(
                     }
                 )
 
-        # Update global progress bar
-        with progress.get_lock():
-            progress.value += 1
-
     # Signal task completion to main process
     env_reset_queue.put(
-        EnvResetSignal(env_idx=process_id, reset=False, done=True, N=None)
+        EnvResetSignal(
+            env_idx=process_id, reset=False, done=True, data_entry_idx=None
+        )
     )
 
     logger.info(f"[Worker] ----- Process {process_id} finished -----")
