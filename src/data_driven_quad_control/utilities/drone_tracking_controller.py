@@ -52,7 +52,7 @@ def hover_at_target(
     tracking_controller: DroneTrackingController,
     target_pos: torch.Tensor,
     target_yaw: torch.Tensor,
-    min_at_target_steps: float | None = 10,
+    min_at_target_steps: int | None = 10,
     error_threshold: float = 5e-2,
     ctbr_controller: DroneCTBRController | None = None,
 ) -> None:
@@ -80,7 +80,7 @@ def hover_at_target(
         target_pos (torch.Tensor): The target position tensor of shape
             (`num_envs`, 3).
         target_yaw (torch.Tensor): The target yaw tensor of shape (`num_envs`).
-        min_at_target_steps (float | None): The minimum number of consecutive
+        min_at_target_steps (int | None): The minimum number of consecutive
             steps the drone must remain near the target to be considered
             stabilized. If `None`, the drone will hover indefinitely.
         error_threshold (float): The maximum allowable position error to
