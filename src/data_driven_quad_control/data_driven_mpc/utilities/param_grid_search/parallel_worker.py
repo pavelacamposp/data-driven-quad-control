@@ -188,7 +188,7 @@ def worker_data_driven_mpc(
             # Calculate the overall average RMSE across all runs
             eval_average_rmse = (
                 np.nanmean(average_rmse_from_runs)
-                if len(average_rmse_from_runs) > 0
+                if np.isfinite(average_rmse_from_runs).any()
                 else np.nan
             )
 
