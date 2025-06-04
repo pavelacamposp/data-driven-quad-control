@@ -68,7 +68,7 @@ def test_dd_mpc_controller_eval(
     p = 3  # Number of outputs
     dd_mpc_config = get_nonlinear_data_driven_mpc_controller_params(
         config_file=test_controller_params_path,
-        controller_key_value="controller_key",
+        controller_key="controller_key",
         m=m,
         p=p,
     )
@@ -80,7 +80,7 @@ def test_dd_mpc_controller_eval(
     # Load initial hover target position from configuration file
     target_pos = get_init_hover_pos(
         config_path=test_controller_params_path,
-        controller_key_value="controller_key",
+        controller_key="controller_key",
         env=env,
     )
     target_yaw = torch.tensor([0.0], device=env.device, dtype=torch.float)

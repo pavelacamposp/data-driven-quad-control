@@ -66,8 +66,8 @@ nonlinear_dd_mpc_approx_1_step:
   alpha_reg_type: 0
 
   # Nonlinear MPC parameters for alpha_reg_type = 0 (Approximated)
-  lamb_alpha_s: 1e-2  #  Regularization parameter for alpha_s (optional)
-  lamb_sigma_s: 1e5  #  Regularization parameter for sigma_s (optional)
+  lambda_alpha_s: 1e-2  #  Regularization parameter for alpha_s (optional)
+  lambda_sigma_s: 1e5  #  Regularization parameter for sigma_s (optional)
 
   # System output setpoint (i.e., drone target position)
   # Note: The drone is initially stabilized at `init_hover_pos` for the initial

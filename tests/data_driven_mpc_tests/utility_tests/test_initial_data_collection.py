@@ -81,7 +81,7 @@ def test_get_init_hover_pos(
 ) -> None:
     target_pos = get_init_hover_pos(
         config_path=test_controller_params_path,
-        controller_key_value="controller_key",
+        controller_key="controller_key",
         env=mock_env,
     )
 
