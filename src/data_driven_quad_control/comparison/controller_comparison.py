@@ -30,6 +30,12 @@ Simulation overview:
    Each parallel controller process controls its corresponding drone to follow
    the setpoints defined in the main YAML config file.
 
+6. Upon termination, control trajectory data collected during simulation is
+   saved to a file in the `logs/comparison` directory. This data includes
+   control inputs, drone positions, and target setpoints for all controllers,
+   and can be used for post-evaluation and plotting to compare the position
+   control performance of each controller.
+
 The drone environment is configured to use a Collective Thrust and Body Rates
 (CTBR) controller internally, with a fixed yaw angular rate of 0 rad/s. This
 simplifies the drone control system and sets the number of control inputs to
@@ -41,6 +47,7 @@ three:
 
 import argparse
 import os
+import pickle
 import warnings
 
 import genesis as gs
@@ -88,6 +95,10 @@ DEFAULT_COMPARISON_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
     "../../../configs/comparison/controller_comparison_config.yaml",
 )
+
+# Directory for saving controller comparison data
+COMPARISON_LOGS_DIR = "logs/comparison"
+os.makedirs(COMPARISON_LOGS_DIR, exist_ok=True)
 
 
 def parse_args() -> argparse.Namespace:
@@ -293,10 +304,13 @@ def main() -> None:
         print("\nData-Driven Controller Comparison Simulation")
         print("-" * 44)
 
+    control_trajectory_data = None
+
     try:
         min_at_target_steps = 10
         error_threshold = 5e-2
-        parallel_controller_simulation(
+
+        control_trajectory_data = parallel_controller_simulation(
             env=env,
             tracking_env_idx=tracking_env_idx,
             tracking_controller_init_data=tracking_controller_init_data,
@@ -317,6 +331,19 @@ def main() -> None:
             print(f"Controller comparison failed with error: {str(e)}")
 
     finally:
+        # Save control trajectory data if no exception occurred
+        control_data_file = os.path.join(
+            COMPARISON_LOGS_DIR, "control_trajectory.pkl"
+        )
+        if control_trajectory_data is not None:
+            with open(control_data_file, "wb") as f:
+                pickle.dump(control_trajectory_data, f)
+
+            if verbose:
+                print(
+                    f"Controller trajectory data saved to: {control_data_file}"
+                )
+
         if verbose:
             print("\nController comparison finished.")
 

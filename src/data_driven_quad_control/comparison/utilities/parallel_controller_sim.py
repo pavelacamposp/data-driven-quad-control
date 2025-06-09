@@ -5,8 +5,14 @@ This module implements the main process responsible for managing the creation
 of parallel controller processes (workers) and the vectorized environment
 stepping, which requires bidirectional communication with the controller
 workers through multiprocessing queues.
+
+The main process also collects control trajectory data during simulation,
+including of control inputs, drone positions, and target setpoints, for all
+controllers. This data can be used for post-evaluation and plotting to compare
+the position control performance of each controller.
 """
 
+import numpy as np
 import torch
 import torch.multiprocessing as mp
 
@@ -14,6 +20,9 @@ from data_driven_quad_control.controllers.tracking.tracking_controller_config im
     TrackingCtrlDroneState,
 )
 from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.utilities.control_data_plotting import (
+    ControlTrajectory,
+)
 from data_driven_quad_control.utilities.drone_environment import (
     update_env_target_pos,
 )
@@ -48,10 +57,10 @@ def parallel_controller_simulation(
     record: bool = False,
     video_fps: int = 60,
     verbose: int = 0,
-) -> None:
+) -> ControlTrajectory:
     """
-    Run a controller performance comparison in a vectorized drone environment
-    using controllers instantiated and run in parallel, independent processes.
+    Run a performance comparison of multiple controllers in a vectorized drone
+    environment and return the resulting control trajectory data.
 
     This function manages the execution of a controller comparison simulation
     in a vectorized environment (`HoverEnv`) to compare the performance of
@@ -99,6 +108,11 @@ def parallel_controller_simulation(
             simulation recording is disabled. Defaults to 60.
         verbose (int): The verbosity level: 0 = no output, 1 = minimal output,
             2 = detailed output.
+
+    Returns:
+        ControlTrajectory: The trajectory data collected during simulation,
+            including control inputs, drone outputs (e.g., positions), and
+            target setpoints, for all controllers.
     """
     # Validate that the multiprocessing start method is "spawn",
     # as it is required for working with CUDA tensors
@@ -194,6 +208,11 @@ def parallel_controller_simulation(
     non_rl_env_mask = torch.ones(action_buffer.shape[0], dtype=torch.bool)
     non_rl_env_mask[rl_env_idx] = False
 
+    # Initialize control trajectory storage lists
+    normalized_action_list = []
+    drone_pos_list = []
+    target_pos_list = []
+
     # Start controller simulation
     if verbose:
         print("Running data-driven position control simulation")
@@ -236,6 +255,9 @@ def parallel_controller_simulation(
                     sim_info=sim_info,
                     verbose=verbose,
                 )
+
+                # Store target position
+                target_pos_list.append(target_pos.cpu().numpy())
 
                 # Send drone target position to each process
                 for _ in range(num_processes):
@@ -305,6 +327,12 @@ def parallel_controller_simulation(
                 dd_mpc_obs = drone_pos[dd_mpc_env_idx].cpu().numpy()
                 dd_mpc_obs_queue.put(dd_mpc_obs)
 
+                # Store control information (using true drone position)
+                normalized_action_list.append(action_buffer.cpu())
+
+                drone_pos_true = env.get_pos(add_noise=False).cpu().numpy()
+                drone_pos_list.append(drone_pos_true)
+
         # Stop recording and save video file
         if record:
             env.cam.stop_recording(
@@ -312,9 +340,19 @@ def parallel_controller_simulation(
                 fps=video_fps,
             )
 
+        # Construct control trajectory data
+        control_trajectory_data = construct_trajectory_data(
+            env_action_bounds=env_action_bounds,
+            normalized_action_list=normalized_action_list,
+            drone_pos_list=drone_pos_list,
+            target_pos_list=target_pos_list,
+        )
+
     # Wait for all processes to complete
     for p in processes:
         p.join()
+
+    return control_trajectory_data
 
 
 def update_simulation_progress(
@@ -345,3 +383,44 @@ def update_simulation_progress(
         # Reset at target step count if a drone
         # moves out of the target's vicinity
         sim_info.at_target_steps = 0
+
+
+def construct_trajectory_data(
+    env_action_bounds: torch.Tensor,
+    normalized_action_list: list[torch.Tensor],
+    drone_pos_list: list[np.ndarray],
+    target_pos_list: list[np.ndarray],
+) -> ControlTrajectory:
+    # Construct control input array from normalized action list
+    control_input_tensor = torch.stack(normalized_action_list, dim=0).cpu()
+    # Clamp inputs to [-1, 1] since actions are clipped within the env
+    control_input_tensor = control_input_tensor.clamp(-1, 1)
+    # Inverse normalize inputs from [-1, 1] to the true control input range
+    control_input_tensor = linear_interpolate(
+        x=control_input_tensor,
+        x_min=-1,
+        x_max=1,
+        y_min=env_action_bounds[:, 0].cpu(),
+        y_max=env_action_bounds[:, 1].cpu(),
+    )
+    control_input_array = control_input_tensor.numpy()
+    control_input_array = control_input_array.transpose(1, 0, 2)
+    control_inputs_list = [
+        control_input_array[i] for i in range(control_input_array.shape[0])
+    ]
+
+    # Construct system output array (drone position)
+    system_output_array = np.stack(drone_pos_list, axis=0)
+    system_output_array = system_output_array.transpose(1, 0, 2)
+    system_outputs_list = [
+        system_output_array[i] for i in range(system_output_array.shape[0])
+    ]
+
+    # Construct setpoint array (target position)
+    setpoint_array = np.vstack(target_pos_list)
+
+    return ControlTrajectory(
+        control_inputs=control_inputs_list,
+        system_outputs=system_outputs_list,
+        system_setpoint=setpoint_array,
+    )

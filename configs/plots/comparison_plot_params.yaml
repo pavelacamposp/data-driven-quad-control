@@ -1,0 +1,63 @@
+---
+# Matplotlib parameters for comparison-specific plots
+
+# Line style parameters
+line_params:
+  tracking:  # Parameters for Tracking controller lines
+    color: "red"
+    linestyle: "-."
+    linewidth: 1.5
+
+  rl:  # Parameters for RL controller lines
+    color: "green"
+    linestyle: "-"
+    linewidth: 1.5
+
+  dd_mpc:  # Parameters for DD-MPC controller lines
+    color: "goldenrod"
+    linestyle: "-"
+    linewidth: 1.5
+
+  setpoints:  # Parameters for setpoint controller lines
+    color: "blue"
+    linestyle: ":"
+    linewidth: 1.5
+
+  bounds:  # Parameters for input bounds lines
+    color: "black"
+    linestyle: "--"
+    linewidth: 1.5
+
+# Legend labels for controllers
+controller_labels:
+  tracking: "Tracking (PID)"
+  rl: "RL - CTBR Fixed Yaw"
+  dd_mpc: "DD-MPC"
+
+# Legend labels for output setpoints
+y_setpoint_labels:
+  - "$x_{pos}$ setpoint"
+  - "$y_{pos}$ setpoint"
+  - "$z_{pos}$ setpoint"
+
+# X-axis labels (used for both input and output subplots)
+x_axis_labels:
+  - "Time [s]"
+  - "Time [s]"
+  - "Time [s]"
+
+# Y-axis labels for input subplots
+input_y_axis_labels:
+  - "Total Thrust [N]"
+  - "Roll Ang. Vel [rad/s]"
+  - "Pitch Ang. Vel [rad/s]"
+
+# Y-axis labels for output subplots
+output_y_axis_labels:
+  - "X Position [m]"
+  - "Y Position [m]"
+  - "Z Position [m]"
+
+# Parameters for figure-level properties
+figure_params:
+  title: "Data-Driven Drone Position Control: RL vs. DD-MPC"

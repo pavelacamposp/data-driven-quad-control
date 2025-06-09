@@ -7,6 +7,9 @@ from data_driven_quad_control.comparison.utilities.parallel_controller_sim impor
     parallel_controller_simulation,
 )
 from data_driven_quad_control.envs.hover_env import HoverEnv
+from data_driven_quad_control.utilities.control_data_plotting import (
+    ControlTrajectory,
+)
 
 PARELLEL_CONTROLLER_SIM_PATH = (
     "data_driven_quad_control.comparison.utilities.parallel_controller_sim."
@@ -85,7 +88,7 @@ def test_parallel_controller_sim(
 
     mock_update_sim_progress.side_effect = dummy_update_simulation_progress
 
-    parallel_controller_simulation(
+    control_trajectory_data = parallel_controller_simulation(
         env=mock_env,
         tracking_env_idx=0,
         tracking_controller_init_data=Mock(),
@@ -97,4 +100,27 @@ def test_parallel_controller_sim(
     )
 
     # Verify the function executed and returned as expected
-    assert True
+    assert isinstance(control_trajectory_data, ControlTrajectory)
+
+    # Verify that the input and output trajectory
+    # lists have the expected number of elements
+    assert len(control_trajectory_data.control_inputs) == num_envs
+    assert len(control_trajectory_data.system_outputs) == num_envs
+
+    # Verify that the control trajectory data arrays have the expected shape
+    input_array_shape = control_trajectory_data.control_inputs[0].shape
+    output_array_shape = control_trajectory_data.system_outputs[0].shape
+    setpoint_array_shape = control_trajectory_data.system_setpoint.shape
+
+    for i in range(num_envs):
+        input_array = control_trajectory_data.control_inputs[i]
+        output_array = control_trajectory_data.system_outputs[i]
+        setpoint_array = control_trajectory_data.system_setpoint
+
+        assert input_array.shape == input_array_shape
+        assert output_array.shape == output_array_shape
+        assert setpoint_array.shape == setpoint_array_shape
+
+        assert input_array.shape[1] == num_envs
+        assert output_array.shape[1] == num_envs
+        assert setpoint_array.shape[1] == num_envs

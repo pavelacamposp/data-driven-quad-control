@@ -26,6 +26,9 @@ from data_driven_quad_control.envs.hover_env_config import (
 from data_driven_quad_control.learning.config.hover_ppo_config import (
     get_train_cfg,
 )
+from data_driven_quad_control.utilities.control_data_plotting import (
+    ControlTrajectory,
+)
 from data_driven_quad_control.utilities.drone_environment import create_env
 from data_driven_quad_control.utilities.drone_tracking_controller import (
     create_drone_tracking_controller,
@@ -65,7 +68,7 @@ def test_controller_comparison(
     dummy_env_cfg["episode_length_s"] = 100
 
     # Initialize environment
-    num_envs = 3
+    num_envs = 3  # Number of controllers
     drone_colors = [(1.0, 0.0, 0.0, 1.0)] * 3
     env = create_env(
         num_envs=num_envs,
@@ -134,8 +137,8 @@ def test_controller_comparison(
         np_random=np.random.default_rng(0),
     )
 
-    # Simulate control systems for comparison
-    parallel_controller_simulation(
+    # Run controller comparison simulation
+    control_trajectory_data = parallel_controller_simulation(
         env=env,
         tracking_env_idx=tracking_env_idx,
         tracking_controller_init_data=tracking_controller_init_data,
@@ -151,5 +154,28 @@ def test_controller_comparison(
     # Close environment
     env.close()
 
-    # Verify the script executed as expected
-    assert True
+    # Verify that the trajectory data matches the expected structure
+    assert isinstance(control_trajectory_data, ControlTrajectory)
+
+    # Verify that the input and output trajectory
+    # lists have the expected number of elements
+    assert len(control_trajectory_data.control_inputs) == num_envs
+    assert len(control_trajectory_data.system_outputs) == num_envs
+
+    # Verify that the control trajectory data arrays have the expected shape
+    input_array_shape = control_trajectory_data.control_inputs[0].shape
+    output_array_shape = control_trajectory_data.system_outputs[0].shape
+    setpoint_array_shape = control_trajectory_data.system_setpoint.shape
+
+    for i in range(num_envs):
+        input_array = control_trajectory_data.control_inputs[i]
+        output_array = control_trajectory_data.system_outputs[i]
+        setpoint_array = control_trajectory_data.system_setpoint
+
+        assert input_array.shape == input_array_shape
+        assert output_array.shape == output_array_shape
+        assert setpoint_array.shape == setpoint_array_shape
+
+        assert input_array.shape[1] == num_envs
+        assert output_array.shape[1] == num_envs
+        assert setpoint_array.shape[1] == num_envs
