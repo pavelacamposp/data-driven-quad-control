@@ -1,6 +1,7 @@
 import signal
 from typing import Any
 
+import pytest
 import torch
 
 from data_driven_quad_control.envs.hover_env import HoverEnv
@@ -12,13 +13,13 @@ from data_driven_quad_control.utilities.drone_tracking_controller import (
     hover_at_target,
 )
 
-TIMEOUT_SECONDS = 5
-
 
 def signal_handler(signum: int, frame: Any) -> None:
     raise TimeoutError("hover_at_target took too long")
 
 
+@pytest.mark.integration
+@pytest.mark.drone_controllers_integration
 def test_drone_tracking_controller(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],
@@ -60,7 +61,7 @@ def test_drone_tracking_controller(
     # Configure a signal alarm to interrupt if hover execution takes
     # too long to prevent the test from hanging indefinitely
     signal.signal(signal.SIGALRM, signal_handler)
-    signal.alarm(TIMEOUT_SECONDS)
+    signal.alarm(5)
 
     # Command drones to hover at target positions and yaws
     try:

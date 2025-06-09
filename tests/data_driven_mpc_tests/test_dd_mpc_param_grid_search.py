@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 
 from data_driven_quad_control.data_driven_mpc.utilities.param_grid_search.grid_search_param_loader import (  # noqa: E501
@@ -35,6 +36,8 @@ from data_driven_quad_control.utilities.drone_tracking_controller import (
 )
 
 
+@pytest.mark.integration
+@pytest.mark.dd_mpc_gs_integration
 def test_dd_mpc_param_grid_search(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],
