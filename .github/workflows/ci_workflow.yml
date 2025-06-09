@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: ["main"]
 
+env:
+  PYTHON_VERSION: '3.12.10'
+
 jobs:
   code_quality_unit_tests:
     runs-on: ubuntu-latest
@@ -32,7 +35,7 @@ jobs:
         uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: '3.12.10'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up cache key
         run: |
@@ -123,7 +126,7 @@ jobs:
         uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: '3.12.10'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up cache key
         run: |
@@ -167,10 +170,14 @@ jobs:
   coverage_report:
     needs: [code_quality_unit_tests, integration_tests]
     runs-on: ubuntu-latest
-    container: python:3.12-slim
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Download unit test coverage data
         uses: actions/download-artifact@v4
