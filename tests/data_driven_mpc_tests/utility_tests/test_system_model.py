@@ -1,6 +1,7 @@
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 
 from data_driven_quad_control.data_driven_mpc.utilities.drone_system_model import (  # noqa: E501
@@ -10,6 +11,8 @@ from data_driven_quad_control.envs.hover_env_config import EnvActionType
 from data_driven_quad_control.utilities.drone_environment import create_env
 
 
+@pytest.mark.integration
+@pytest.mark.dd_mpc_system_model_integration
 def test_system_model(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],

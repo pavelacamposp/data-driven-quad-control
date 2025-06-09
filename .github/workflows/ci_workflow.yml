@@ -7,8 +7,11 @@ on:
   pull_request:
     branches: ["main"]
 
+env:
+  PYTHON_VERSION: '3.12.10'
+
 jobs:
-  ci_workflow:
+  code_quality_unit_tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,7 +35,7 @@ jobs:
         uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: '3.12.10'
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up cache key
         run: |
@@ -75,7 +78,152 @@ jobs:
       - name: YAML Lint
         run: yamllint --strict .
 
-      - name: Run tests with coverage
+      - name: Run unit tests with coverage
         run: |
-          coverage run -m pytest --maxfail=2 --disable-warnings
+          coverage run --parallel-mode -m pytest \
+            --maxfail=2 \
+            --disable-warnings \
+            -m "not integration"
+
+      - name: Upload coverage file
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data-unit
+          path: .coverage.*
+          include-hidden-files: true
+
+  integration_tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_type: [
+          drone_env_integration,
+          drone_utilities_integration,
+          drone_ctbr_controller_integration,
+          drone_track_controller_integration,
+          dd_mpc_eval_integration,
+          dd_mpc_system_model_integration,
+          dd_mpc_gs_integration,
+        ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git \
+            build-essential \
+            libgl1-mesa-dev \
+            libgles2-mesa-dev \
+            libosmesa6-dev \
+            mesa-utils \
+            libsm6 \
+            libxext6 \
+            libxrender1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        id: setup-python
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up cache key
+        run: |
+          os_version=$(grep VERSION_ID /etc/os-release | cut -d '"' -f 2)
+          python_version="${{ steps.setup-python.outputs.python-version }}"
+          python_location="${{ env.pythonLocation }}"
+          cache_key="${python_version}-${os_version}-${python_location}"
+          echo "cache_key=$cache_key" >> $GITHUB_ENV
+
+      - name: Set up cache restore for installed packages
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.cache_key }}-${{ hashFiles('requirements-ci.txt') }}
+
+      - name: Upgrade pip and setuptools
+        run: python -m pip install --upgrade pip setuptools
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install --default-timeout=100 --retries=5 -r requirements-ci.txt
+
+      - name: Install project package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Run integration test with coverage - ${{ matrix.test_type }}
+        run: |
+          coverage run --parallel-mode -m pytest \
+            --disable-warnings \
+            -m "${{ matrix.test_type }}"
+
+      - name: Upload coverage file
+        uses: actions/upload-artifact@v4
+        with:
+          name: "coverage-data-${{ matrix.test_type }}"
+          path: .coverage.*
+          include-hidden-files: true
+
+  coverage_report:
+    needs: [code_quality_unit_tests, integration_tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download unit test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-unit
+
+      - name: Download drone env integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-drone_env_integration
+
+      - name: Download drone utilities integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-drone_utilities_integration
+
+      - name: Download drone CTBR controller integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-drone_ctbr_controller_integration
+
+      - name: Download drone tracking controller integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-drone_track_controller_integration
+
+      - name: Download DDMPC eval integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-dd_mpc_eval_integration
+
+      - name: Download DDMPC system model integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-dd_mpc_system_model_integration
+
+      - name: Download DDMPC grid search integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-dd_mpc_gs_integration
+
+      - name: Install coverage
+        run: pip install coverage
+
+      - name: Combine and show coverage report
+        run: |
+          coverage combine
           coverage report

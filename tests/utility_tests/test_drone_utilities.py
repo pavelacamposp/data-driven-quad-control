@@ -1,6 +1,7 @@
 from dataclasses import asdict
 from typing import Any
 
+import pytest
 import torch
 
 from data_driven_quad_control.envs.hover_env_config import EnvActionType
@@ -12,6 +13,8 @@ from data_driven_quad_control.utilities.drone_environment import (
 )
 
 
+@pytest.mark.integration
+@pytest.mark.drone_utilities_integration
 def test_hover_env_utilities(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],

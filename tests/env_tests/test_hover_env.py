@@ -1,11 +1,14 @@
 from typing import Any
 
+import pytest
 import torch
 
 from data_driven_quad_control.envs.hover_env import HoverEnv
 from data_driven_quad_control.envs.hover_env_config import EnvActionType
 
 
+@pytest.mark.integration
+@pytest.mark.drone_env_integration
 def test_hover_env_loop(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],

@@ -1,6 +1,7 @@
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 from direct_data_driven_mpc.utilities.controller.controller_creation import (
     create_nonlinear_data_driven_mpc_controller,
@@ -31,6 +32,8 @@ from data_driven_quad_control.utilities.drone_tracking_controller import (
 )
 
 
+@pytest.mark.integration
+@pytest.mark.dd_mpc_eval_integration
 def test_dd_mpc_controller_eval(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],

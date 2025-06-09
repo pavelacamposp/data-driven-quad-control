@@ -63,6 +63,18 @@ ignore_missing_imports = true
 disallow_untyped_defs = true
 warn_unused_ignores = true
 
+[tool.pytest.ini_options]
+markers =[
+  "integration: Marks all integration tests",
+  "drone_env_integration: Integration tests for the main drone environment",
+  "drone_utilities_integration: Integration tests for drone utilities",
+  "drone_ctbr_controller_integration: Integration tests for drone CTBR controllers",
+  "drone_track_controller_integration: Integration tests for drone tracking controllers",
+  "dd_mpc_eval_integration: Integration tests for DDMPC controller evaluations",
+  "dd_mpc_system_model_integration: Integration tests for DDMPC system model utility",
+  "dd_mpc_gs_integration: Integration tests for DDMPC parameter grid search",
+]
+
 [tool.coverage.run]
 # Ignore opencv-python created files
 omit = [

@@ -1,5 +1,6 @@
 from typing import Any
 
+import pytest
 import torch
 from torch.testing import assert_close
 
@@ -11,6 +12,8 @@ from data_driven_quad_control.envs.hover_env_config import (
 from data_driven_quad_control.utilities.math_utils import linear_interpolate
 
 
+@pytest.mark.integration
+@pytest.mark.drone_ctbr_controller_integration
 def test_drone_ctbr_controller(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],
