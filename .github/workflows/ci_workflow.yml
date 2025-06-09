@@ -136,9 +136,9 @@ jobs:
           cache_key="${python_version}-${os_version}-${python_location}"
           echo "cache_key=$cache_key" >> $GITHUB_ENV
 
-      - name: Set up cache for installed packages
+      - name: Set up cache restore for installed packages
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ env.cache_key }}-${{ hashFiles('requirements-ci.txt') }}
