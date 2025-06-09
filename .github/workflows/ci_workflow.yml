@@ -99,7 +99,8 @@ jobs:
         test_type: [
           drone_env_integration,
           drone_utilities_integration,
-          drone_controllers_integration,
+          drone_ctbr_controller_integration,
+          drone_track_controller_integration,
           dd_mpc_eval_integration,
           dd_mpc_system_model_integration,
           dd_mpc_gs_integration,
@@ -194,10 +195,15 @@ jobs:
         with:
           name: coverage-data-drone_utilities_integration
 
-      - name: Download drone controllers integration test coverage data
+      - name: Download drone CTBR controller integration test coverage data
         uses: actions/download-artifact@v4
         with:
-          name: coverage-data-drone_controllers_integration
+          name: coverage-data-drone_ctbr_controller_integration
+
+      - name: Download drone tracking controller integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-drone_track_controller_integration
 
       - name: Download DDMPC eval integration test coverage data
         uses: actions/download-artifact@v4

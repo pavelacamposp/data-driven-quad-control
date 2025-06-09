@@ -13,7 +13,7 @@ from data_driven_quad_control.utilities.math_utils import linear_interpolate
 
 
 @pytest.mark.integration
-@pytest.mark.drone_controllers_integration
+@pytest.mark.drone_ctbr_controller_integration
 def test_drone_ctbr_controller(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],

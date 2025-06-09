@@ -19,7 +19,7 @@ def signal_handler(signum: int, frame: Any) -> None:
 
 
 @pytest.mark.integration
-@pytest.mark.drone_controllers_integration
+@pytest.mark.drone_track_controller_integration
 def test_drone_tracking_controller(
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],
