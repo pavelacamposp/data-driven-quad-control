@@ -22,8 +22,8 @@ controller_key:
     - [-0.1, 0.1]
     - [-0.1, 0.1]
   alpha_reg_type: 0
-  lamb_alpha_s: 10
-  lamb_sigma_s: 1000
+  lambda_alpha_s: 10
+  lambda_sigma_s: 1000
   y_r: [1.0, 1.0, 1.0]
   ext_out_incr_in: false
   update_cost_threshold: null

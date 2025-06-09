@@ -65,7 +65,7 @@ DEFAULT_CONTROLLER_CONFIG_PATH = os.path.join(
     os.path.dirname(__file__),
     "../../../configs/data_driven_mpc/dd_mpc_controller_params.yaml",
 )
-DEFAULT_CONTROLLER_KEY_VALUE = "nonlinear_dd_mpc_approx_1_step"
+DEFAULT_CONTROLLER_KEY = "nonlinear_dd_mpc_approx_1_step"
 
 
 def parse_args() -> argparse.Namespace:
@@ -81,9 +81,9 @@ def parse_args() -> argparse.Namespace:
         "nonlinear data-driven MPC parameters.",
     )
     parser.add_argument(
-        "--controller_key_value",
+        "--controller_key",
         type=str,
-        default=DEFAULT_CONTROLLER_KEY_VALUE,
+        default=DEFAULT_CONTROLLER_KEY,
         help="The key to access the controller parameters in the "
         "configuration file.",
     )
@@ -119,7 +119,7 @@ def main() -> None:
     # Parse arguments
     args = parse_args()
     controller_config_path = args.controller_config_path
-    controller_key_value = args.controller_key_value
+    controller_key = args.controller_key
     t_sim = args.t_sim
     headless = args.headless
     seed = args.seed
@@ -192,7 +192,7 @@ def main() -> None:
     p = 3  # Number of outputs
     dd_mpc_config = get_nonlinear_data_driven_mpc_controller_params(
         config_file=controller_config_path,
-        controller_key_value=controller_key_value,
+        controller_key=controller_key,
         m=m,
         p=p,
         verbose=verbose,
@@ -210,7 +210,7 @@ def main() -> None:
     # Load initial hover target position from configuration file
     target_pos = get_init_hover_pos(
         config_path=controller_config_path,
-        controller_key_value=controller_key_value,
+        controller_key=controller_key,
         env=env,
     )
     target_yaw = torch.tensor([0.0], device=env.device, dtype=torch.float)

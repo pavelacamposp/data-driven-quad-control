@@ -190,7 +190,7 @@ def collect_initial_input_output_data(
 
 
 def get_init_hover_pos(
-    config_path: str, controller_key_value: str, env: HoverEnv
+    config_path: str, controller_key: str, env: HoverEnv
 ) -> torch.Tensor:
     """
     Retrieve the initial hover position from a data-driven MPC controller YAML
@@ -199,8 +199,8 @@ def get_init_hover_pos(
     Args:
         config_path (str): The path to the YAML configuration file containing
             data-driven MPC parameters.
-        controller_key_value (str): The key to access the controller parameters
-            in the config file.
+        controller_key (str): The key to access the controller parameters in
+            the config file.
         env (HoverEnv): The drone environment.
 
     Returns:
@@ -208,7 +208,7 @@ def get_init_hover_pos(
     """
     config = load_yaml_config(config_path)
 
-    hover_pos_list = config[controller_key_value]["init_hover_pos"]
+    hover_pos_list = config[controller_key]["init_hover_pos"]
     init_hover_pos = torch.tensor(
         hover_pos_list, device=env.device, dtype=torch.float
     )
