@@ -18,6 +18,7 @@ def create_env(
     show_viewer: bool = False,
     device: torch.device | str = "cuda",
     action_type: EnvActionType = EnvActionType.CTBR_FIXED_YAW,
+    drone_colors: list[tuple[float, float, float, float]] | None = None,
 ) -> HoverEnv:
     env = HoverEnv(
         num_envs=num_envs,
@@ -28,6 +29,7 @@ def create_env(
         show_viewer=show_viewer,
         device=device,
         action_type=action_type,
+        drone_colors=drone_colors,
         auto_target_updates=False,  # Disable automatic target position updates
     )
 
