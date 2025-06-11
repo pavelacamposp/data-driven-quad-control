@@ -84,7 +84,7 @@ def test_parallel_controller_sim(
     # the simulation on the first iteration and to prevent deadlocks
     def dummy_update_simulation_progress(*args: Any, **kwargs: Any) -> None:
         sim_info = kwargs["sim_info"]
-        sim_info.stabilized_at_target = True
+        sim_info.target_done = True
 
     mock_update_sim_progress.side_effect = dummy_update_simulation_progress
 

@@ -49,6 +49,7 @@ import argparse
 import os
 import pickle
 import warnings
+from datetime import datetime
 
 import genesis as gs
 import numpy as np
@@ -319,6 +320,7 @@ def main() -> None:
             dd_mpc_env_idx=dd_mpc_env_idx,
             dd_mpc_controller_init_data=dd_mpc_controller_init_data,
             eval_setpoints=controller_comparison_params.eval_setpoints,
+            steps_per_setpoint=controller_comparison_params.steps_per_setpoint,
             min_at_target_steps=min_at_target_steps,
             error_threshold=error_threshold,
             record=record,
@@ -332,9 +334,9 @@ def main() -> None:
 
     finally:
         # Save control trajectory data if no exception occurred
-        control_data_file = os.path.join(
-            COMPARISON_LOGS_DIR, "control_trajectory.pkl"
-        )
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_name = f"control_trajectory_{timestamp}.pkl"
+        control_data_file = os.path.join(COMPARISON_LOGS_DIR, file_name)
         if control_trajectory_data is not None:
             with open(control_data_file, "wb") as f:
                 pickle.dump(control_trajectory_data, f)

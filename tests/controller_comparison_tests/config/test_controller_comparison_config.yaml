@@ -13,3 +13,4 @@ comparison_params:
   init_hover_pos: [0.0, 0.0, 1.5]
   eval_setpoints:
     - [0.0, 0.0, 1.5]
+  steps_per_setpoint: 1

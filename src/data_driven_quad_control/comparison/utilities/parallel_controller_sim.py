@@ -52,6 +52,7 @@ def parallel_controller_simulation(
     rl_env_idx: int,
     rl_controller_init_data: RLControllerInitData,
     eval_setpoints: list[torch.Tensor],
+    steps_per_setpoint: int | None = None,
     min_at_target_steps: int = 10,
     error_threshold: float = 5e-2,
     record: bool = False,
@@ -96,6 +97,10 @@ def parallel_controller_simulation(
             initialization data.
         eval_setpoints (list[torch.Tensor]): The target setpoints for
             evaluation.
+        steps_per_setpoint (int | None): The number of steps per setpoint. If
+            set, targets change every `steps_per_setpoint` time steps.
+            If `None`, targets change only after all drones reach their current
+            target. Defaults to `None`.
         min_at_target_steps (int): The minimum number of consecutive steps
             drones must remain near the target to be considered stabilized.
             Once stabilized, the target setpoint is updated to the next on the
@@ -215,7 +220,16 @@ def parallel_controller_simulation(
 
     # Start controller simulation
     if verbose:
-        print("Running data-driven position control simulation")
+        if steps_per_setpoint is not None:
+            print(
+                "Running data-driven position control simulation ("
+                f"{steps_per_setpoint} steps per setpoint)"
+            )
+        else:
+            print(
+                "Running data-driven position control simulation ("
+                "stabilization required at each setpoint)"
+            )
 
     num_setpoints = len(eval_setpoints)
     sim_info = SimInfo(num_targets=num_setpoints)
@@ -232,8 +246,9 @@ def parallel_controller_simulation(
                     f"pos to: {target_pos.tolist()}"
                 )
 
+            sim_info.steps_since_target_set = 0
             sim_info.at_target_steps = 0
-            sim_info.stabilized_at_target = False
+            sim_info.target_done = False
             sim_info.current_target_idx = target_idx
             is_new_target = True
 
@@ -245,11 +260,12 @@ def parallel_controller_simulation(
             )
 
             # Manage environment simulation and communication with controllers
-            while not sim_info.stabilized_at_target:
+            while not sim_info.target_done:
                 # Update simulation progress
                 update_simulation_progress(
                     target_pos=target_pos,
                     drone_pos=env.get_pos(add_noise=False),  # True drone pos
+                    steps_per_setpoint=steps_per_setpoint,
                     min_at_target_steps=min_at_target_steps,
                     error_threshold=error_threshold,
                     sim_info=sim_info,
@@ -358,31 +374,49 @@ def parallel_controller_simulation(
 def update_simulation_progress(
     target_pos: torch.Tensor,
     drone_pos: torch.Tensor,
+    steps_per_setpoint: int | None,
     min_at_target_steps: int,
     error_threshold: float,
     sim_info: SimInfo,
     verbose: int,
 ) -> None:
-    # Update the duration of drones hovering close to its target
-    pos_error = torch.abs(target_pos - drone_pos).max().item()
-    if pos_error < error_threshold:
-        sim_info.at_target_steps += 1
+    if steps_per_setpoint is not None:
+        # Change targets when the step count for this
+        # target reaches `steps_per_setpoint`
+        sim_info.steps_since_target_set += 1
 
-        # Mark drones as stabilized if they remained at its target long enough
-        if sim_info.at_target_steps == min_at_target_steps:
-            sim_info.stabilized_at_target = True
+        if sim_info.steps_since_target_set == steps_per_setpoint:
+            sim_info.target_done = True
 
             if verbose:
-                print("    Drones successfully stabilized")
+                print("    Reached max number of steps for target")
 
-            # Mark simulation for termination if the
-            # drones stabilized at the last target
+            # Mark simulation for termination if this is the last target
             if sim_info.current_target_idx == sim_info.num_targets - 1:
                 sim_info.in_progress = False
+
     else:
-        # Reset at target step count if a drone
-        # moves out of the target's vicinity
-        sim_info.at_target_steps = 0
+        # Change targets only when drone stabilize at them
+        # Update the duration of drones hovering close to its target
+        pos_error = torch.abs(target_pos - drone_pos).max().item()
+        if pos_error < error_threshold:
+            sim_info.at_target_steps += 1
+
+            # Mark target as done if drones remain
+            # close to it long enough (stabilized)
+            if sim_info.at_target_steps == min_at_target_steps:
+                sim_info.target_done = True
+
+                if verbose:
+                    print("    Drones successfully stabilized")
+
+                # Mark simulation for termination if this is the last target
+                if sim_info.current_target_idx == sim_info.num_targets - 1:
+                    sim_info.in_progress = False
+        else:
+            # Reset at target step count if a drone
+            # moves out of the target's vicinity
+            sim_info.at_target_steps = 0
 
 
 def construct_trajectory_data(

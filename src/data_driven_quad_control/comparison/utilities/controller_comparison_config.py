@@ -19,6 +19,7 @@ class ControllerComparisonParams(NamedTuple):
     dd_mpc_controller_config: NonlinearDataDrivenMPCParams
     init_hover_pos: torch.Tensor
     eval_setpoints: list[torch.Tensor]
+    steps_per_setpoint: int | None
 
 
 class TrackingControllerInitData(NamedTuple):
@@ -42,8 +43,9 @@ class RLControllerInitData(NamedTuple):
 @dataclass
 class SimInfo:
     in_progress: bool = True
+    steps_since_target_set: int = 0
     at_target_steps: int = 0
-    stabilized_at_target: bool = False
+    target_done: bool = False
     current_target_idx: int = 0
     num_targets: int = 0
 

@@ -29,3 +29,11 @@ comparison_params:
     - [1.0, 1.0, 2.5]
     - [0.0, 0.0, 1.5]
     - [-1.0, -1.0, 0.5]
+
+  # Number of steps per setpoint
+  # If `null`, targets change only after all controller drones reach their
+  # current target.
+  # If set, targets change every `steps_per_setpoint` time steps. This
+  # standardizes the simulation length, enabling the comparison of multiple
+  # control trajectories in a unified plot.
+  steps_per_setpoint: 150

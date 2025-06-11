@@ -39,7 +39,7 @@ def load_controller_comparison_params(
           init_hover_pos: [0.0, 0.0, 1.5]
           eval_setpoints:
             - [0.0, 0.0, 2.5]
-            ...
+          steps_per_setpoint: 150
 
     Args:
         config_path (str): The path to the YAML configuration file containing
@@ -99,6 +99,7 @@ def load_controller_comparison_params(
         ).unsqueeze(0)
         for setpoint in comparison_params_raw["eval_setpoints"]
     ]
+    steps_per_setpoint = comparison_params_raw["steps_per_setpoint"]
 
     return ControllerComparisonParams(
         tracking_controller_config,
@@ -106,4 +107,5 @@ def load_controller_comparison_params(
         dd_mpc_controller_config,
         init_hover_pos,
         eval_setpoints,
+        steps_per_setpoint,
     )

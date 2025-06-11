@@ -147,8 +147,7 @@ def test_controller_comparison(
         dd_mpc_env_idx=dd_mpc_env_idx,
         dd_mpc_controller_init_data=dd_mpc_controller_init_data,
         eval_setpoints=controller_comparison_params.eval_setpoints,
-        min_at_target_steps=1,
-        error_threshold=5e-2,
+        steps_per_setpoint=controller_comparison_params.steps_per_setpoint,
     )
 
     # Close environment
