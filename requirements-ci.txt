@@ -3,7 +3,7 @@ git+https://github.com/Genesis-Embodied-AI/Genesis.git@0c6fdd9
 numpy==2.2.6
 torch==2.7.0
 rsl-rl-lib==2.3.2
-git+https://github.com/pavelacamposp/direct_data_driven_mpc.git@02b12f6
+git+https://github.com/pavelacamposp/direct_data_driven_mpc.git@a273f56
 ruff==0.11.11
 mypy==1.15.0
 yamllint==1.37.1
