@@ -21,6 +21,7 @@ def dummy_env_cfg() -> dict[str, Any]:
         "decimation": 4,
         "simulate_action_latency": True,
         "clip_actions": 1.0,
+        "actuator_noise_std": 0.0,
         "termination_if_roll_greater_than": 180,  # degree
         "termination_if_pitch_greater_than": 180,
         "termination_if_close_to_ground": 0.1,
@@ -48,6 +49,7 @@ def dummy_obs_cfg() -> dict[str, Any]:
             "lin_vel": 1.0,
             "ang_vel": 1.0,
         },
+        "obs_noise_std": 0.0,
     }
 
 
