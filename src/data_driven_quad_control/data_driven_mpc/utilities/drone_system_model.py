@@ -40,7 +40,7 @@ def drone_dynamics(
     # Get system state from environment
     # We assume the state to be the base position, omitting other variables
     # since we only require input-output data for controlling the drone
-    state = env.base_pos[env_idx].cpu().numpy()
+    state = env.get_pos()[env_idx].cpu().numpy()
 
     return state
 

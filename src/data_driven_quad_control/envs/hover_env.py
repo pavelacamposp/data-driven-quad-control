@@ -551,6 +551,35 @@ class HoverEnv:
     def get_observations(self) -> tuple[torch.Tensor, dict[str, Any]]:
         return self.obs_buf, self.extras
 
+    def get_pos(self, add_noise: bool = True) -> torch.Tensor:
+        """Get the drone's position with optional noise."""
+        if add_noise and self.obs_noise_std > 0.0:
+            # Note:
+            # Gaussian noise is added to normalized observations, so it
+            # must be scaled when applied to absolute positions.
+            pos_noise = (
+                torch.randn_like(self.base_pos)
+                * self.obs_noise_std
+                / self.obs_scales["rel_pos"]
+            )
+
+            return self.base_pos + pos_noise
+
+        return self.base_pos
+
+    def get_quat(self, add_noise: bool = True) -> torch.Tensor:
+        """Get the drone's quaternion with optional noise."""
+        if add_noise and self.obs_noise_std > 0.0:
+            # Note:
+            # This Gaussian noise addition approximates valid rotation
+            # noise only for small standard deviations
+            quat = self._add_noise(self.base_quat, self.obs_noise_std)
+            quat = quat / quat.norm(dim=1, keepdim=True)
+
+            return quat
+
+        return self.base_quat
+
     def _add_noise(
         self, input_tensor: torch.Tensor, noise_std: float
     ) -> torch.Tensor:

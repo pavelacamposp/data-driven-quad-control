@@ -53,6 +53,12 @@ class MockHoverEnv:
     ) -> None:
         pass
 
+    def get_pos(self, add_noise: bool = True) -> torch.Tensor:
+        return torch.zeros((1, 3))
+
+    def get_quat(self, add_noise: bool = True) -> torch.Tensor:
+        return torch.zeros((1, 4))
+
 
 class MockDroneSystemModel:
     def __init__(self) -> None:

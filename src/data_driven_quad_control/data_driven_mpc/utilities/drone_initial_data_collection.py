@@ -108,7 +108,7 @@ def collect_initial_input_output_data(
     target_state = TrackingCtrlDroneState(X=target_pos, Q=target_quat)
 
     # Initialize current drone state
-    current_state = TrackingCtrlDroneState(X=env.base_pos, Q=env.base_quat)
+    current_state = TrackingCtrlDroneState(X=env.get_pos(), Q=env.get_quat())
 
     # Retrieve env action bounds from env
     env_action_bounds = env.action_bounds
@@ -131,8 +131,8 @@ def collect_initial_input_output_data(
     with torch.no_grad():
         for k in range(N):
             # Update current drone state
-            current_state.X = env.base_pos
-            current_state.Q = env.base_quat
+            current_state.X = env.get_pos()
+            current_state.Q = env.get_quat()
 
             # Compute command from stabilizing controller
             ctrl_ctbr_cmd = stabilizing_controller.compute(
@@ -184,7 +184,7 @@ def collect_initial_input_output_data(
                 env.step(env_action)
 
                 # Get system output (drone position)
-                y_N[k, :] = env.base_pos[base_env_idx].cpu().numpy()
+                y_N[k, :] = env.get_pos()[base_env_idx].cpu().numpy()
 
     return u_N, y_N
 

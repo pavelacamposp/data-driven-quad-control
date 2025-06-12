@@ -112,7 +112,7 @@ def hover_at_target(
     env_action_bounds = env.action_bounds
 
     # Initialize current drone state
-    current_state = TrackingCtrlDroneState(X=env.base_pos, Q=env.base_quat)
+    current_state = TrackingCtrlDroneState(X=env.get_pos(), Q=env.get_quat())
 
     at_target_steps = 0
     with torch.no_grad():
@@ -121,8 +121,8 @@ def hover_at_target(
             or at_target_steps < min_at_target_steps
         ):
             # Update current drone state
-            current_state.X = env.base_pos
-            current_state.Q = env.base_quat
+            current_state.X = env.get_pos()
+            current_state.Q = env.get_quat()
 
             # Compute CTBR action from tracking controller
             ctrl_ctbr_action = tracking_controller.compute(
