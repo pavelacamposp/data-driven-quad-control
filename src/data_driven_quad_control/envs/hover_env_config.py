@@ -39,6 +39,8 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         # actions
         "simulate_action_latency": True,
         "clip_actions": 1.0,
+        # noise (std dev) added to actuators (rotor RPMs)
+        "actuator_noise_std": 0.0,  # [RPM]
         # termination
         "termination_if_roll_greater_than": 180,  # degree
         "termination_if_pitch_greater_than": 180,
@@ -66,6 +68,8 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
             "lin_vel": 1 / 3.0,
             "ang_vel": 1 / 3.14159,
         },
+        # noise (std dev) added to normalized observations
+        "obs_noise_std": 0.0,
     }
     reward_cfg = {
         "yaw_lambda": -10.0,

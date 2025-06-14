@@ -255,7 +255,7 @@ def parallel_grid_search(
                 # Note: We only "observe" the non-normalized drone's
                 # base position, which is the system output for the
                 # Data-Driven MPC control system
-                observation = env.base_pos.cpu().numpy()
+                observation = env.get_pos().cpu().numpy()
 
                 logger.info("[MAIN] Reached env observation sending point")
 

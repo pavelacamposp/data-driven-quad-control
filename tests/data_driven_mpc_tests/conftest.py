@@ -5,13 +5,7 @@ import pytest
 from tests.mocks import (
     MockDroneSystemModel,
     MockDroneTrackingController,
-    MockHoverEnv,
 )
-
-
-@pytest.fixture
-def mock_env() -> MockHoverEnv:
-    return MockHoverEnv()
 
 
 @pytest.fixture

@@ -19,8 +19,19 @@ class MockHoverEnv:
         self.num_envs = 1
         self.num_actions = 3
         self.device = torch.device("cpu")
+
+        self.obs_scales = {
+            "rel_pos": 1.0,
+            "lin_vel": 1.0,
+            "ang_vel": 1.0,
+        }
+
+        self.actions = torch.tensor([[-0.5, 0.0, 0.5]])
+        self.last_actions = self.actions.clone()
         self.base_pos = torch.tensor([[0.0, 0.0, 1.0]])
         self.base_quat = torch.tensor([[1.0, 0.0, 0.0, 0.0]])
+        self.base_lin_vel = torch.tensor([[0.1, 0.2, 0.3]])
+        self.base_ang_vel = torch.tensor([[0.1, 0.2, 0.3]])
         self.action_bounds = torch.tensor(
             [
                 [0.0, 1.0],  # Thrust
@@ -30,8 +41,18 @@ class MockHoverEnv:
         )
         self.action_type = EnvActionType.CTBR_FIXED_YAW
 
+        self.actuator_noise_std = 0.0
+        self.obs_noise_std = 0.0
+
+        self.rel_pos = self.base_pos.clone()
+
     def step(self, actions: torch.Tensor) -> Any:
         pass
+
+    def _add_noise(
+        self, input_tensor: torch.Tensor, noise_std: float
+    ) -> torch.Tensor:
+        return input_tensor + self.obs_noise_std
 
     def get_current_state(self, envs_idx: torch.Tensor) -> EnvState:
         return EnvState(
@@ -52,6 +73,12 @@ class MockHoverEnv:
         self, envs_idx: torch.Tensor, saved_state: EnvState
     ) -> None:
         pass
+
+    def get_pos(self, add_noise: bool = True) -> torch.Tensor:
+        return torch.zeros((1, 3))
+
+    def get_quat(self, add_noise: bool = True) -> torch.Tensor:
+        return torch.zeros((1, 4))
 
 
 class MockDroneSystemModel:

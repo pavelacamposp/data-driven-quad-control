@@ -15,6 +15,7 @@
 #   - Implemented methods for saving and loading environment states.
 #   - Added parameter for disabling automatic target position (command)
 #     updates.
+#   - Integrated stochastic actuator and observation noise.
 #   - Updated environment for compatibility with `rsl_rl_lib` v2.3.1.
 
 import math
@@ -264,6 +265,10 @@ class HoverEnv:
         )
         self.last_base_pos = torch.zeros_like(self.base_pos)
 
+        # Configure actuator and observation noise
+        self.actuator_noise_std: float = env_cfg["actuator_noise_std"]
+        self.obs_noise_std: float = obs_cfg["obs_noise_std"]
+
         self.extras: dict[str, Any] = {}  # extra information for logging
         self.extras["observations"] = {}
 
@@ -311,6 +316,7 @@ class HoverEnv:
             self.env_cfg["clip_actions"],
         )
 
+        # Simulate action latency
         exec_actions = (
             self.last_actions if self.simulate_action_latency else self.actions
         )
@@ -352,6 +358,13 @@ class HoverEnv:
                 x_max=1,
                 y_min=self.action_bounds[:, 0],
                 y_max=self.action_bounds[:, 1],
+            )
+
+        # Add actuator noise to rotor RPMs
+        if self.actuator_noise_std > 0.0:
+            rotor_RPMs = self._add_noise(rotor_RPMs, self.actuator_noise_std)
+            rotor_RPMs = rotor_RPMs.clamp(
+                EnvActionBounds.MIN_RPM, EnvActionBounds.MAX_RPM
             )
 
         # perform physics stepping
@@ -449,20 +462,7 @@ class HoverEnv:
             self.episode_sums[name] += rew
 
         # compute observations
-        self.obs_buf = torch.cat(
-            [
-                torch.clip(self.rel_pos * self.obs_scales["rel_pos"], -1, 1),
-                self.base_quat,
-                torch.clip(
-                    self.base_lin_vel * self.obs_scales["lin_vel"], -1, 1
-                ),
-                torch.clip(
-                    self.base_ang_vel * self.obs_scales["ang_vel"], -1, 1
-                ),
-                self.last_actions,
-            ],
-            dim=-1,
-        )
+        self.obs_buf = self.compute_observations()
 
         self.last_actions[:] = self.actions[:]
 
@@ -516,8 +516,74 @@ class HoverEnv:
 
         self._resample_commands(envs_idx)
 
+    def compute_observations(self) -> torch.Tensor:
+        # Normalize observations to the [-1, 1] range
+        pos = torch.clip(self.rel_pos * self.obs_scales["rel_pos"], -1, 1)
+        quat = self.base_quat.clone()
+        lin_vel = torch.clip(
+            self.base_lin_vel * self.obs_scales["lin_vel"], -1, 1
+        )
+        ang_vel = torch.clip(
+            self.base_ang_vel * self.obs_scales["ang_vel"], -1, 1
+        )
+        last_actions = self.last_actions
+
+        # Add noise to observations except last actions
+        if self.obs_noise_std > 0.0:
+            pos = self._add_noise(pos, self.obs_noise_std)
+            lin_vel = self._add_noise(lin_vel, self.obs_noise_std)
+            ang_vel = self._add_noise(ang_vel, self.obs_noise_std)
+
+            # Add noise to quaternions
+            # Note:
+            # Directly adding Gaussian noise to quaternions and then
+            # normalizing them approximates valid rotation noise only
+            # for small standard deviations.
+            quat = self._add_noise(quat, self.obs_noise_std)
+            quat = quat / quat.norm(dim=1, keepdim=True)
+
+        obs_buf = torch.cat(
+            [pos, quat, lin_vel, ang_vel, last_actions], dim=-1
+        )
+
+        return obs_buf
+
     def get_observations(self) -> tuple[torch.Tensor, dict[str, Any]]:
         return self.obs_buf, self.extras
+
+    def get_pos(self, add_noise: bool = True) -> torch.Tensor:
+        """Get the drone's position with optional noise."""
+        if add_noise and self.obs_noise_std > 0.0:
+            # Note:
+            # Gaussian noise is added to normalized observations, so it
+            # must be scaled when applied to absolute positions.
+            pos_noise = (
+                torch.randn_like(self.base_pos)
+                * self.obs_noise_std
+                / self.obs_scales["rel_pos"]
+            )
+
+            return self.base_pos + pos_noise
+
+        return self.base_pos
+
+    def get_quat(self, add_noise: bool = True) -> torch.Tensor:
+        """Get the drone's quaternion with optional noise."""
+        if add_noise and self.obs_noise_std > 0.0:
+            # Note:
+            # This Gaussian noise addition approximates valid rotation
+            # noise only for small standard deviations
+            quat = self._add_noise(self.base_quat, self.obs_noise_std)
+            quat = quat / quat.norm(dim=1, keepdim=True)
+
+            return quat
+
+        return self.base_quat
+
+    def _add_noise(
+        self, input_tensor: torch.Tensor, noise_std: float
+    ) -> torch.Tensor:
+        return input_tensor + torch.randn_like(input_tensor) * noise_std
 
     # ------------ target position update ------------
     def update_target_pos(

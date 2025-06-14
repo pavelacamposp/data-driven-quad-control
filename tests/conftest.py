@@ -3,6 +3,10 @@ from typing import Any
 import genesis as gs
 import pytest
 
+from .mocks import (
+    MockHoverEnv,
+)
+
 test_gs_initialized = False
 
 
@@ -21,6 +25,7 @@ def dummy_env_cfg() -> dict[str, Any]:
         "decimation": 4,
         "simulate_action_latency": True,
         "clip_actions": 1.0,
+        "actuator_noise_std": 0.0,
         "termination_if_roll_greater_than": 180,  # degree
         "termination_if_pitch_greater_than": 180,
         "termination_if_close_to_ground": 0.1,
@@ -48,6 +53,7 @@ def dummy_obs_cfg() -> dict[str, Any]:
             "lin_vel": 1.0,
             "ang_vel": 1.0,
         },
+        "obs_noise_std": 0.0,
     }
 
 
@@ -73,3 +79,8 @@ def dummy_command_cfg() -> dict[str, Any]:
         "pos_y_range": (-1.0, 1.0),
         "pos_z_range": (0.5, 2.0),
     }
+
+
+@pytest.fixture
+def mock_env() -> MockHoverEnv:
+    return MockHoverEnv()
