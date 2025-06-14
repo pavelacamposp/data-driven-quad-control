@@ -3,6 +3,10 @@ from typing import Any
 import genesis as gs
 import pytest
 
+from .mocks import (
+    MockHoverEnv,
+)
+
 test_gs_initialized = False
 
 
@@ -75,3 +79,8 @@ def dummy_command_cfg() -> dict[str, Any]:
         "pos_y_range": (-1.0, 1.0),
         "pos_z_range": (0.5, 2.0),
     }
+
+
+@pytest.fixture
+def mock_env() -> MockHoverEnv:
+    return MockHoverEnv()
