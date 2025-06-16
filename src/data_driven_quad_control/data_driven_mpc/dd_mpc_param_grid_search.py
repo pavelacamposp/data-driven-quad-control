@@ -254,6 +254,14 @@ def main() -> None:
     # Load environment configuration
     env_cfg, obs_cfg, reward_cfg, command_cfg = get_cfgs()
 
+    # Enable observation noise
+    obs_cfg["obs_noise_std"] = 1e-4  # Observation noise std (normalized)
+    # Note:
+    # Observation noise is added to normalized observations. For drone position
+    # observations, an std of 1e-4 corresponds to a physical position error std
+    # of 1e-4 / obs_cfg["obs_scales"]["rel_pos"] = 1e-4 / (1 / 3) = 0.3 mm
+    # after denormalization and rescaling (since x_norm = x * scale).
+
     # Increase episode length and spatial bounds to allow sufficient
     # time and space for the data-driven MPC parameter grid search
     env_cfg["episode_length_s"] = 100000
