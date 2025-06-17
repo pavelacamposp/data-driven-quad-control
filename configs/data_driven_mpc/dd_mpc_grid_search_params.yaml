@@ -1,4 +1,5 @@
 ---
+# Nonlinear Data-Driven MPC Grid Search Parameters
 initial_data_collection:
   # Target position for data collection
   # Note:
@@ -72,14 +73,14 @@ evaluation_params:
   # failure.
   eval_setpoints:
     - [1.0, 1.0, 2.5]
-    - [1.0, -1.0, 0.5]
     - [-1.0, 1.0, 1.5]
+    - [-1.0, -1.0, 0.5]
 
   # Maximum allowed distance increment for evaluation
   # Defines the maximum allowable increment in the drone's distance to its
   # target relative to the initial distance. If exceeded during evaluation, the
   # run is terminated early.
-  max_target_dist_increment: 0.2
+  max_target_dist_increment: 0.5
 
   # Number of distinct initial data collections per trajectory length
   # Defines the number of distinct initial data collections per trajectory
@@ -95,15 +96,15 @@ parameter_grid:
   n: [4, 6]
 
   # Prediction horizon
-  L: [35]
+  L: [30, 35]
 
   # Regularization parameters for alpha and sigma
-  lamb_alpha: [1e0, 1e1, 5e1, 1e2, 5e2, 1e3]
-  lamb_sigma: [1e1, 1e3, 1e5, 1e7]
+  lamb_alpha: [1e1, 5e1, 1e2, 5e2, 1e3]
+  lamb_sigma: [1e5, 1e7, 1e9]
 
   # Regularization parameter for alpha_s and sigma_s
   # Note:
   # Set to [0.0] if the alpha regularization type (`alpha_reg_type`) is not
   # approximated, as these parameters are unused in that case.
   lamb_alpha_s: [1e-3, 1e-2, 1e-1, 1e0, 1e1]
-  lamb_sigma_s: [1e3, 1e4, 1e5, 1e7]
+  lamb_sigma_s: [1e3, 1e5, 1e7]
