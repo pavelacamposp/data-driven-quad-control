@@ -206,17 +206,17 @@ jobs:
         with:
           name: coverage-data-drone_track_controller_integration
 
-      - name: Download DDMPC eval integration test coverage data
+      - name: Download DD-MPC eval integration test coverage data
         uses: actions/download-artifact@v4
         with:
           name: coverage-data-dd_mpc_eval_integration
 
-      - name: Download DDMPC system model integration test coverage data
+      - name: Download DD-MPC system model integration test coverage data
         uses: actions/download-artifact@v4
         with:
           name: coverage-data-dd_mpc_system_model_integration
 
-      - name: Download DDMPC grid search integration test coverage data
+      - name: Download DD-MPC grid search integration test coverage data
         uses: actions/download-artifact@v4
         with:
           name: coverage-data-dd_mpc_gs_integration
