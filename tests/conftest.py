@@ -38,6 +38,7 @@ def dummy_env_cfg() -> dict[str, Any]:
         "base_init_quat": [1.0, 0.0, 0.0, 0.0],
         "episode_length_s": 15.0,
         "at_target_threshold": 0.1,
+        "min_hover_time_s": 0.01,
         "resampling_time_s": 3.0,
         "visualize_target": False,
         "visualize_camera": False,

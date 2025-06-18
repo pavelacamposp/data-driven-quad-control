@@ -56,6 +56,7 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         # episode config
         "episode_length_s": 15.0,
         "at_target_threshold": 0.1,
+        "min_hover_time_s": 0.5,  # Min time (sec) at target before updating
         "resampling_time_s": 3.0,
         # visualization
         "visualize_target": False,
