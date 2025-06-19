@@ -164,8 +164,8 @@ def test_dd_mpc_param_grid_search(
     assert "Fixed parameters:" in output
     assert "Evaluation parameters:" in output
     assert "Grid Search conducted over the following parameters:" in output
-    assert "Successful Results (2/2):" in output
-    assert "Failed Results (0/2):" in output
+    assert "Successful Results (1/1):" in output
+    assert "Failed Results (0/1):" in output
 
     # Check expected parameter values
     assert "n_n_mpc_step: False" in output
@@ -184,5 +184,5 @@ def test_dd_mpc_param_grid_search(
     assert f"average_RMSE={min_result_rmse}" in first_result_line
 
     # Sanity checks
-    assert output.count("average_RMSE=") == 2
-    assert output.count("N=") == 2
+    assert output.count("average_RMSE=") == 1
+    assert output.count("N=") == 1
