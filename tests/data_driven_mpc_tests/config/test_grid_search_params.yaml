@@ -23,7 +23,7 @@ fixed_params:
   n_n_mpc_step: false
 
 parameter_grid:
-  N: [40, 45]
+  N: [40]
   n: [2]
   L: [5]
   lamb_alpha: [10]
@@ -32,8 +32,8 @@ parameter_grid:
   lamb_sigma_s: [1000]
 
 evaluation_params:
-  eval_time_steps: 20
+  eval_time_steps: 1
   eval_setpoints:
     - [1.0, 1.0, 1.0]
   max_target_dist_increment: 0.5
-  num_collections_per_N: 2
+  num_collections_per_N: 1
