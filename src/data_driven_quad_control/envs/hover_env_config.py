@@ -76,6 +76,7 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         "yaw_lambda": -10.0,
         "reward_scales": {
             "target": 10.0,
+            "hover_time": 0.01,
             "smooth": -1e-4,
             "yaw": 0.01,
             "angular": -2e-4,

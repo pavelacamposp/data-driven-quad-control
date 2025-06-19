@@ -21,6 +21,8 @@
 #   - Added a configuration parameter (`env_cfg["min_hover_time_s"]`) to
 #     define the minimum time (in seconds) a drone needs to hover at a target
 #     before it is updated.
+#   - Added a hover time reward (`_reward_hover_time`) to encourage drones to
+#     stabilize at targets.
 
 import math
 from typing import Any
@@ -710,6 +712,10 @@ class HoverEnv:
             torch.square(self.last_rel_pos), dim=1
         ) - torch.sum(torch.square(self.rel_pos), dim=1)
         return target_rew
+
+    def _reward_hover_time(self) -> torch.Tensor:
+        hover_rew = self.hover_counter
+        return hover_rew
 
     def _reward_smooth(self) -> torch.Tensor:
         smooth_rew = torch.sum(
