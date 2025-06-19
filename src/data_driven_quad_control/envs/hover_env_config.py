@@ -88,7 +88,7 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         "num_commands": 3,
         "pos_x_range": [-1.0, 1.0],
         "pos_y_range": [-1.0, 1.0],
-        "pos_z_range": [1.0, 1.0],
+        "pos_z_range": [1.0, 3.0],
     }
 
     return env_cfg, obs_cfg, reward_cfg, command_cfg
