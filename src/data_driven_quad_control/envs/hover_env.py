@@ -23,6 +23,8 @@
 #     before it is updated.
 #   - Added a hover time reward (`_reward_hover_time`) to encourage drones to
 #     stabilize at targets.
+#   - Added a target closeness reward (`_reward_closeness`) to encourage
+#     drones to approach targets when within their vicinity.
 
 import math
 from typing import Any
@@ -281,6 +283,8 @@ class HoverEnv:
         # Configure minimum hover time at target for target updates
         self.min_hover_time_s = env_cfg["min_hover_time_s"]
         self.min_hover_steps = math.ceil(self.min_hover_time_s / self.step_dt)
+        self.at_target_threshold = env_cfg["at_target_threshold"]
+        self.at_target_threshold_square = self.at_target_threshold**2
 
         # Initialize buffer to count steps at target
         self.hover_counter = torch.zeros(
@@ -311,8 +315,7 @@ class HoverEnv:
     def _hovering_at_target(self) -> torch.Tensor:
         # Get a mask identifying which drones (env indices) are at target
         at_target_mask = (
-            torch.norm(self.rel_pos, dim=1)
-            < self.env_cfg["at_target_threshold"]
+            torch.norm(self.rel_pos, dim=1) < self.at_target_threshold
         )
 
         # Increment counters of drones that are at target
@@ -712,6 +715,19 @@ class HoverEnv:
             torch.square(self.last_rel_pos), dim=1
         ) - torch.sum(torch.square(self.rel_pos), dim=1)
         return target_rew
+
+    def _reward_closeness(self) -> torch.Tensor:
+        dist_square = torch.sum(torch.square(self.rel_pos), dim=1)
+
+        # Reward is 1 at the target and decreases linearly to 0
+        # at `at_target_threshold` distance
+        closeness_rew = torch.clamp(
+            (self.at_target_threshold_square - dist_square)
+            / self.at_target_threshold_square,
+            min=0.0,
+        )
+
+        return closeness_rew
 
     def _reward_hover_time(self) -> torch.Tensor:
         hover_rew = self.hover_counter

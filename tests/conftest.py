@@ -64,6 +64,7 @@ def dummy_reward_cfg() -> dict[str, Any]:
         "yaw_lambda": -1.0,
         "reward_scales": {
             "target": 1.0,
+            "closeness": 1.0,
             "hover_time": 1.0,
             "smooth": 1.0,
             "yaw": 1.0,
