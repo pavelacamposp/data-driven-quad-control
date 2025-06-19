@@ -56,6 +56,7 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         # episode config
         "episode_length_s": 15.0,
         "at_target_threshold": 0.1,
+        "min_hover_time_s": 0.5,  # Min time (sec) at target before updating
         "resampling_time_s": 3.0,
         # visualization
         "visualize_target": False,
@@ -75,6 +76,8 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         "yaw_lambda": -10.0,
         "reward_scales": {
             "target": 10.0,
+            "closeness": 1.5,
+            "hover_time": 0.01,
             "smooth": -1e-4,
             "yaw": 0.01,
             "angular": -2e-4,
@@ -85,7 +88,7 @@ def get_cfgs() -> tuple[CfgDict, CfgDict, CfgDict, CfgDict]:
         "num_commands": 3,
         "pos_x_range": [-1.0, 1.0],
         "pos_y_range": [-1.0, 1.0],
-        "pos_z_range": [1.0, 1.0],
+        "pos_z_range": [1.0, 3.0],
     }
 
     return env_cfg, obs_cfg, reward_cfg, command_cfg

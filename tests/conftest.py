@@ -38,6 +38,7 @@ def dummy_env_cfg() -> dict[str, Any]:
         "base_init_quat": [1.0, 0.0, 0.0, 0.0],
         "episode_length_s": 15.0,
         "at_target_threshold": 0.1,
+        "min_hover_time_s": 0.01,
         "resampling_time_s": 3.0,
         "visualize_target": False,
         "visualize_camera": False,
@@ -63,6 +64,8 @@ def dummy_reward_cfg() -> dict[str, Any]:
         "yaw_lambda": -1.0,
         "reward_scales": {
             "target": 1.0,
+            "closeness": 1.0,
+            "hover_time": 1.0,
             "smooth": 1.0,
             "yaw": 1.0,
             "angular": 1.0,

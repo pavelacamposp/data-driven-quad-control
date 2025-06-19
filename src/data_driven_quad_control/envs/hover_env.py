@@ -8,15 +8,23 @@
 # Key modifications:
 #   - Implemented a Collective Thrust and Body Rates (CTBR) internal
 #     controller to support actions consisting of total thrust and body rates.
-#   - Implemented action decimation (number of simulation steps
+#   - Implemented action decimation (i.e., number of simulation steps
 #     to take for each task step).
 #   - Added early termination when excessive linear or angular velocities are
 #     encountered to prevent numerical instabilities during simulation.
-#   - Implemented methods for saving and loading environment states.
-#   - Added parameter for disabling automatic target position (command)
-#     updates.
+#   - Implemented methods for saving (`get_current_state`) and restoring
+#     (`restore_from_state`) environment states.
+#   - Added a parameter (`auto_target_updates`) to disable automatic target
+#     position (command) updates.
 #   - Integrated stochastic actuator and observation noise.
 #   - Updated environment for compatibility with `rsl_rl_lib` v2.3.1.
+#   - Added a configuration parameter (`env_cfg["min_hover_time_s"]`) to
+#     define the minimum time (in seconds) a drone needs to hover at a target
+#     before it is updated.
+#   - Added a hover time reward (`_reward_hover_time`) to encourage drones to
+#     stabilize at targets.
+#   - Added a target closeness reward (`_reward_closeness`) to encourage
+#     drones to approach targets when within their vicinity.
 
 import math
 from typing import Any
@@ -272,6 +280,17 @@ class HoverEnv:
         self.extras: dict[str, Any] = {}  # extra information for logging
         self.extras["observations"] = {}
 
+        # Configure minimum hover time at target for target updates
+        self.min_hover_time_s = env_cfg["min_hover_time_s"]
+        self.min_hover_steps = math.ceil(self.min_hover_time_s / self.step_dt)
+        self.at_target_threshold = env_cfg["at_target_threshold"]
+        self.at_target_threshold_square = self.at_target_threshold**2
+
+        # Initialize buffer to count steps at target
+        self.hover_counter = torch.zeros(
+            (self.num_envs,), device=self.device, dtype=torch.int
+        )
+
         # Enable automatic target updates (commands)
         # If True, target positions are updated when reached.
         # If False, they must be manually changed.
@@ -293,14 +312,26 @@ class HoverEnv:
                 self.commands[envs_idx], zero_velocity=True, envs_idx=envs_idx
             )
 
-    def _at_target(self) -> torch.Tensor:
-        at_target = (
-            torch.norm(self.rel_pos, dim=1)
-            < self.env_cfg["at_target_threshold"]
+    def _hovering_at_target(self) -> torch.Tensor:
+        # Get a mask identifying which drones (env indices) are at target
+        at_target_mask = (
+            torch.norm(self.rel_pos, dim=1) < self.at_target_threshold
         )
-        at_target = at_target.nonzero(as_tuple=False).flatten()
 
-        return at_target
+        # Increment counters of drones that are at target
+        self.hover_counter[at_target_mask] += 1
+        # Reset counters for drones that moved away from the target
+        self.hover_counter[~at_target_mask] = 0
+
+        # Get indices of drones stabilized at target
+        # (hovered at target for at least `min_hover_steps` steps)
+        stabilized_at_target = (
+            (self.hover_counter >= self.min_hover_steps)
+            .nonzero(as_tuple=False)
+            .flatten()
+        )
+
+        return stabilized_at_target
 
     def reset(self) -> tuple[torch.Tensor, None]:
         self.reset_buf[:] = True
@@ -397,8 +428,11 @@ class HoverEnv:
 
         # resample commands automatically if enabled
         if self.auto_target_updates:
-            envs_idx = self._at_target()
-            self._resample_commands(envs_idx)
+            stabilized_envs_idx = self._hovering_at_target()
+
+            if len(stabilized_envs_idx) > 0:
+                self._resample_commands(stabilized_envs_idx)
+                self.hover_counter[stabilized_envs_idx] = 0
 
         # check termination and reset
         self.crash_condition = (
@@ -500,6 +534,7 @@ class HoverEnv:
         self.last_actions[envs_idx] = 0.0
         self.episode_length_buf[envs_idx] = 0
         self.reset_buf[envs_idx] = True
+        self.hover_counter[envs_idx] = 0
 
         # fill extras
         self.extras["episode"] = {}
@@ -680,6 +715,23 @@ class HoverEnv:
             torch.square(self.last_rel_pos), dim=1
         ) - torch.sum(torch.square(self.rel_pos), dim=1)
         return target_rew
+
+    def _reward_closeness(self) -> torch.Tensor:
+        dist_square = torch.sum(torch.square(self.rel_pos), dim=1)
+
+        # Reward is 1 at the target and decreases linearly to 0
+        # at `at_target_threshold` distance
+        closeness_rew = torch.clamp(
+            (self.at_target_threshold_square - dist_square)
+            / self.at_target_threshold_square,
+            min=0.0,
+        )
+
+        return closeness_rew
+
+    def _reward_hover_time(self) -> torch.Tensor:
+        hover_rew = self.hover_counter
+        return hover_rew
 
     def _reward_smooth(self) -> torch.Tensor:
         smooth_rew = torch.sum(

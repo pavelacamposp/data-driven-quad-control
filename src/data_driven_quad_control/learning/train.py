@@ -19,6 +19,9 @@ from data_driven_quad_control.learning.config.hover_ppo_config import (
     ENV_ACTION_TYPES_MAP,
     get_train_cfg,
 )
+from data_driven_quad_control.learning.config.reward_config import (
+    get_reward_cfg_by_action_type,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,8 +71,12 @@ def main() -> None:
 
     # Retrieve environment and training configuration
     log_dir = f"logs/{args.exp_name}_{args.action_type}"
-    env_cfg, obs_cfg, reward_cfg, command_cfg = get_cfgs()
+    env_cfg, obs_cfg, _, command_cfg = get_cfgs()
     train_cfg = get_train_cfg(args.exp_name, args.max_iterations)
+
+    # Retrieve reward config based on action type
+    action_type = ENV_ACTION_TYPES_MAP[args.action_type]
+    reward_cfg = get_reward_cfg_by_action_type(action_type)
 
     # Save configurations to a file
     if os.path.exists(log_dir):
@@ -91,7 +98,7 @@ def main() -> None:
         reward_cfg=reward_cfg,
         command_cfg=command_cfg,
         show_viewer=args.vis,
-        action_type=ENV_ACTION_TYPES_MAP[args.action_type],
+        action_type=action_type,
     )
 
     # Create and train model
