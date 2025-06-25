@@ -104,6 +104,7 @@ jobs:
           dd_mpc_eval_integration,
           dd_mpc_system_model_integration,
           dd_mpc_gs_integration,
+          comparison_integration,
         ]
     steps:
       - name: Checkout
@@ -219,6 +220,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-data-dd_mpc_gs_integration
+
+      - name: Download controller comparison integration test coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-data-comparison_integration
 
       - name: Install coverage
         run: pip install coverage
