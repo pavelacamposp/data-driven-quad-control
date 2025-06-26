@@ -53,6 +53,7 @@ from datetime import datetime
 
 import genesis as gs
 import numpy as np
+import torch
 import torch.multiprocessing as mp
 
 from data_driven_quad_control.controllers.tracking.tracking_controller_config import (  # noqa: E501
@@ -174,6 +175,14 @@ def main() -> None:
 
     gs.init(seed=seed, backend=gs.gpu, logging_level="warning")
 
+    # Load controller comparison configuration parameters
+    env_device = torch.device("cuda")
+    controller_comparison_params = load_controller_comparison_params(
+        config_path=comparison_config_path,
+        env_device=env_device,
+        verbose=verbose,
+    )
+
     # Load environment configuration
     env_cfg, obs_cfg, reward_cfg, command_cfg = get_cfgs()
 
@@ -218,6 +227,8 @@ def main() -> None:
         show_viewer=show_viewer,
         action_type=EnvActionType.CTBR_FIXED_YAW,
         drone_colors=drone_colors,
+        device=env_device,
+        camera_config=controller_comparison_params.camera_config,
     )
 
     # Reset environment
@@ -226,13 +237,6 @@ def main() -> None:
     # Start video recording if enabled
     if record:
         env.start_recording()
-
-    # Load controller configuration data
-    controller_comparison_params = load_controller_comparison_params(
-        config_path=comparison_config_path,
-        env_device=env.device,
-        verbose=verbose,
-    )
 
     # --- Construct controller initialization data ---
     if verbose:

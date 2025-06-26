@@ -20,6 +20,7 @@ class ControllerComparisonParams(NamedTuple):
     init_hover_pos: torch.Tensor
     eval_setpoints: list[torch.Tensor]
     steps_per_setpoint: int | None
+    camera_config: dict[str, Any]
 
 
 class TrackingControllerInitData(NamedTuple):

@@ -37,3 +37,10 @@ comparison_params:
   # standardizes the simulation length, enabling the comparison of multiple
   # control trajectories in a unified plot.
   steps_per_setpoint: 150
+
+# Parameters for configuring the camera for simulation and video recording
+camera_config:
+  res: [640, 480]
+  pos: [3.0, 0.0, 3.5]
+  lookat: [0.0, 0.0, 1.5]
+  fov: 40

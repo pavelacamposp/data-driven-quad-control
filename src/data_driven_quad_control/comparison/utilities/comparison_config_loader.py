@@ -41,6 +41,11 @@ def load_controller_comparison_params(
             - [0.0, 0.0, 2.5]
           steps_per_setpoint: 150
 
+        camera_config:
+          pos: [3.0, 0.0, 3.5]
+          lookat: [0.0, 0.0, 1.5]
+          fov: 40
+
     Args:
         config_path (str): The path to the YAML configuration file containing
             the controller comparison parameters.
@@ -101,6 +106,15 @@ def load_controller_comparison_params(
     ]
     steps_per_setpoint = comparison_params_raw["steps_per_setpoint"]
 
+    # Load video recording parameters
+    camera_config_params_raw = config["camera_config"]
+    camera_config = {
+        "res": camera_config_params_raw["res"],
+        "pos": camera_config_params_raw["pos"],
+        "lookat": camera_config_params_raw["lookat"],
+        "fov": camera_config_params_raw["fov"],
+    }
+
     return ControllerComparisonParams(
         tracking_controller_config,
         ppo_model_path,
@@ -108,4 +122,5 @@ def load_controller_comparison_params(
         init_hover_pos,
         eval_setpoints,
         steps_per_setpoint,
+        camera_config,
     )
