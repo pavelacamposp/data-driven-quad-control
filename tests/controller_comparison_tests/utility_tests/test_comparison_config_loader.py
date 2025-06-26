@@ -39,6 +39,6 @@ def test_load_controller_comparison_params(
     )
 
     assert (
-        "ctbr_fixed_yaw_model_1000.pt"
+        "test_ctbr_fixed_yaw_model.pt"
         in controller_comparison_params.ppo_model_path
     )
