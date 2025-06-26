@@ -1,5 +1,5 @@
 """
-Load configuration for nonlinear data-driven MPC parameter grid search
+Load configuration for a nonlinear data-driven MPC parameter grid search.
 
 This module provides functionality for loading configuration parameters for a
 nonlinear data-driven MPC parameter grid search from a YAML config file.

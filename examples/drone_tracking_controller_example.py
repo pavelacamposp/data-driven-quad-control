@@ -87,8 +87,9 @@ def main() -> None:
     env_cfg["visualize_target"] = True
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
-    # Expand spatial bounds to provide enough space for running
-    # the tracking controller simulation
+    # Increase episode length and spatial bounds to provide enough
+    # time and space to run the tracking controller simulation
+    env_cfg["episode_length_s"] = 100
     env_cfg["termination_if_close_to_ground"] = 0.0
     env_cfg["termination_if_x_greater_than"] = 10.0
     env_cfg["termination_if_y_greater_than"] = 10.0

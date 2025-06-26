@@ -1,5 +1,6 @@
 ---
 # Nonlinear Data-Driven MPC Grid Search Parameters
+
 initial_data_collection:
   # Target position for data collection
   # Note:

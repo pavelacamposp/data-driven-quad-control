@@ -1,5 +1,5 @@
 """
-Nonlinear data-driven MPC controller creation for parameter grid search
+Create nonlinear data-driven MPC controllers for a parameter grid search.
 
 This module provides functionality for creating nonlinear data-driven MPC
 controllers using fixed and combination parameters from a controller parameter

@@ -12,8 +12,11 @@ evaluates it in a closed-loop simulation.
 
 The drone environment is configured to use a Collective Thrust and Body Rates
 (CTBR) controller internally, with a fixed yaw angular rate of 0 rad/s. This
-simplifies the drone control system and sets the number of control inputs to 3:
-total thrust [N], roll angular rate [rad/s], pitch angular rate [rad/s].
+simplifies the drone control system and sets the number of control inputs to
+three:
+    - Total thrust [N]
+    - Roll angular rate [rad/s]
+    - Pitch angular rate [rad/s]
 
 The nonlinear data-driven MPC controller is available at:
 https://github.com/pavelacamposp/direct_data_driven_mpc

@@ -1,5 +1,5 @@
 ---
-# Parameters for a drone tracking controller
+# Parameters for a PID-based drone tracking controller
 
 tracking_controller_params:
   # P, I, D gains for position controllers
