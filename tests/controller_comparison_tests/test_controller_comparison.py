@@ -3,6 +3,8 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
+import torch
+from torch.types import FileLike
 
 from data_driven_quad_control.comparison.utilities.comparison_config_loader import (  # noqa: E501
     load_controller_comparison_params,
@@ -39,12 +41,17 @@ MP_GET_START_METHOD_PATCH_PATH = (
     "mp.get_start_method"
 )
 
+# Save original `torch.load` before patching
+_TORCH_LOAD = torch.load
+
 
 @pytest.mark.integration
 @pytest.mark.comparison_integration
+@patch("torch.load")
 @patch(MP_GET_START_METHOD_PATCH_PATH)
 def test_controller_comparison(
     mock_mpc_get_start_method: Mock,
+    mock_torch_load: Mock,
     dummy_env_cfg: dict[str, Any],
     dummy_obs_cfg: dict[str, Any],
     dummy_reward_cfg: dict[str, Any],
@@ -61,6 +68,18 @@ def test_controller_comparison(
     # not setting the start method to "spawn" will raise:
     #   "RuntimeError: Cannot re-initialize CUDA in forked subprocess."
     mock_mpc_get_start_method.return_value = "spawn"
+
+    # Patch `torch.load` to force loading models onto CPU
+    # This ensures that policies from `rsl_rl.runners.OnPolicyRunner`
+    # are always loaded onto CPU, even when they were trained on GPU.
+    # This prevents the error within the RL controller worker:
+    #   RuntimeError: Attempting to deserialize object on a CUDA device but
+    #   torch.cuda.is_available() is False
+    def mock_torch_load_to_cpu(f: FileLike, *args: Any, **kwargs: Any) -> Any:
+        kwargs["map_location"] = torch.device("cpu")
+        return _TORCH_LOAD(f, *args, **kwargs)
+
+    mock_torch_load.side_effect = mock_torch_load_to_cpu
 
     # Note: Genesis initialized in `tests/conftest.py`
 
