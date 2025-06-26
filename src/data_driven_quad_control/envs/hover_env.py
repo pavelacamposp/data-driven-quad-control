@@ -31,6 +31,8 @@
 #     and save the recording as a video file (`stop_and_save_recording`).
 #   - Integrated camera rendering into simulation steps to simplify video
 #     recording.
+#   - Added a parameter (`camera_config`) to configure camera resolution,
+#     position, look-at target, and FOV.
 
 import math
 from typing import Any
@@ -76,6 +78,7 @@ class HoverEnv:
         auto_target_updates: bool = True,
         action_type: EnvActionType = EnvActionType.CTBR,
         drone_colors: list[tuple[float, float, float, float]] | None = None,
+        camera_config: dict[str, Any] | None = None,
     ):
         self._is_closed = False  # Env closing status
 
@@ -162,14 +165,23 @@ class HoverEnv:
         self.obs_scales = obs_cfg["obs_scales"]
         self.reward_scales = reward_cfg["reward_scales"]
 
+        # Retrieve camera configuration
+        if camera_config is None:
+            camera_config = {}
+
+        self.camera_res = camera_config.get("res", (640, 480))
+        self.camera_pos = camera_config.get("pos", (3.0, 0.0, 3.0))
+        self.camera_lookat = camera_config.get("lookat", (0.0, 0.0, 1.0))
+        self.camera_fov = camera_config.get("fov", 40)
+
         # create scene
         self.scene = gs.Scene(
             sim_options=gs.options.SimOptions(dt=self.dt, substeps=1),
             viewer_options=gs.options.ViewerOptions(
                 max_FPS=env_cfg["max_visualize_FPS"],
-                camera_pos=(3.0, 0.0, 3.0),
-                camera_lookat=(0.0, 0.0, 1.0),
-                camera_fov=40,
+                camera_pos=self.camera_pos,
+                camera_lookat=self.camera_lookat,
+                camera_fov=self.camera_fov,
             ),
             vis_options=gs.options.VisOptions(
                 rendered_envs_idx=list(range(self.num_envs))
@@ -207,10 +219,10 @@ class HoverEnv:
         # add camera
         if self.env_cfg["visualize_camera"]:
             self.cam = self.scene.add_camera(
-                res=(640, 480),
-                pos=(3.5, 0.0, 2.5),
-                lookat=(0, 0, 0.5),
-                fov=30,
+                res=self.camera_res,
+                pos=self.camera_pos,
+                lookat=self.camera_lookat,
+                fov=self.camera_fov,
                 GUI=True,
             )
 
