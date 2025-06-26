@@ -1,6 +1,7 @@
 from typing import Any
 from unittest.mock import Mock, patch
 
+import numpy as np
 import pytest
 import torch
 
@@ -138,3 +139,71 @@ def test_env_get_quat(add_noise: bool, mock_env: HoverEnv) -> None:
 
     # Verify computed quaternion matches the expected tensor
     torch.testing.assert_close(quat, expected_quat)
+
+
+@pytest.mark.parametrize("valid_color_list", [True, False])
+def test_initialize_debug_drone_colors(
+    valid_color_list: bool,
+    mock_env: HoverEnv,
+) -> None:
+    # Define test parameters
+    num_envs = 3
+    dummy_color = (1.0, 0.0, 0.0, 1.0)
+    test_drone_colors = (
+        [dummy_color] * num_envs
+        if valid_color_list
+        else [dummy_color] * (num_envs - 1)
+    )
+
+    # Override number of environments in the mocked env
+    mock_env.num_envs = num_envs
+
+    # Mock the `scene` attribute in the mocked env
+    mock_env.scene = Mock()
+    mock_env.scene.envs_offset = np.zeros((num_envs, 3))
+
+    # Test initialization function based on
+    # whether the color list is valid or not
+    if valid_color_list:
+        HoverEnv.initialize_debug_color_spheres(mock_env, test_drone_colors)
+
+        # Verify that debug color spheres are correctly enabled
+        assert mock_env.drone_offsets.shape == (num_envs, 3)
+        assert mock_env.drone_colors_enabled
+        assert mock_env.drone_colors == test_drone_colors
+    else:
+        # Verify that a `ValueError` exception is raised
+        # with invalid color lists
+        with pytest.raises(ValueError, match="The number of colors"):
+            HoverEnv.initialize_debug_color_spheres(
+                mock_env, test_drone_colors
+            )
+
+
+def test_draw_colored_spheres(mock_env: HoverEnv) -> None:
+    # Define test parameters
+    num_envs = 3
+    dummy_color = (1.0, 0.0, 0.0, 1.0)
+    dummy_drone_colors = [dummy_color] * num_envs
+    test_local_pos = torch.zeros((num_envs, 3))
+
+    # Override number of environments in the mocked env
+    mock_env.num_envs = num_envs
+    mock_env.drone_colors = dummy_drone_colors
+
+    # Mock the `scene` attribute in the mocked env
+    mock_env.scene = Mock()
+
+    # Mock `drone.get_pos()` in the mocked env
+    mock_env.drone = Mock()
+    mock_env.drone.get_pos.return_value = test_local_pos
+
+    # Add test attributes to the mocked env
+    mock_env.drone_offsets = torch.ones((num_envs, 3))
+
+    # Call method
+    HoverEnv.draw_colored_spheres(mock_env)
+
+    # Verify scene methods were called the expected number of times
+    mock_env.scene.clear_debug_objects.assert_called_once()
+    assert mock_env.scene.draw_debug_sphere.call_count == num_envs

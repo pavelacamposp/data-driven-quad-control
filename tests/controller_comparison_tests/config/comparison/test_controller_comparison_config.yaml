@@ -1,0 +1,16 @@
+---
+tracking_controller:
+  config_path: configs/controllers/tracking/tracking_controller_params.yaml
+
+dd_mpc_controller:
+  config_path: tests/controller_comparison_tests/config/data_driven_mpc/test_dd_mpc_controller_params.yaml  # yamllint disable-line rule:line-length
+  controller_key: test_dd_mpc_key
+
+rl_ppo_model:
+  model_path: tests/controller_comparison_tests/models/test_ctbr_fixed_yaw_model.pt  # yamllint disable-line rule:line-length
+
+comparison_params:
+  init_hover_pos: [0.0, 0.0, 1.5]
+  eval_setpoints:
+    - [0.0, 0.0, 1.5]
+  steps_per_setpoint: 1

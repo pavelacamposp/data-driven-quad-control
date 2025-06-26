@@ -25,6 +25,8 @@
 #     stabilize at targets.
 #   - Added a target closeness reward (`_reward_closeness`) to encourage
 #     drones to approach targets when within their vicinity.
+#   - Added a parameter (`drone_colors`) to enable drawing debug colored
+#     spheres over drones for visual differentiation.
 
 import math
 from typing import Any
@@ -69,6 +71,7 @@ class HoverEnv:
         device: torch.device | str = "cuda",
         auto_target_updates: bool = True,
         action_type: EnvActionType = EnvActionType.CTBR,
+        drone_colors: list[tuple[float, float, float, float]] | None = None,
     ):
         self._is_closed = False  # Env closing status
 
@@ -296,6 +299,11 @@ class HoverEnv:
         # If False, they must be manually changed.
         self.auto_target_updates = auto_target_updates
 
+        # Enable drawing debug colored spheres over
+        # drones if drone colors are provided
+        self.drone_colors_enabled = False
+        self.initialize_debug_color_spheres(drone_colors)
+
     def _resample_commands(self, envs_idx: torch.Tensor) -> None:
         self.commands[envs_idx, 0] = gs_rand_float(
             *self.command_cfg["pos_x_range"], (len(envs_idx),), self.device
@@ -402,6 +410,10 @@ class HoverEnv:
         for _ in range(self.decimation):
             self.drone.set_propellels_rpm(rotor_RPMs)
             self.scene.step()
+
+            # Draw debug spheres for visual differentiation if enabled
+            if self.drone_colors_enabled:
+                self.draw_colored_spheres()
 
         # update buffers
         self.episode_length_buf += 1
@@ -708,6 +720,42 @@ class HoverEnv:
         # Load CTBR controller state if the action type is CTBR
         if self.uses_ctbr_actions:
             self.ctbr_controller.load_state(ctbr_controller_state)
+
+    # ------------ debug colored spheres drawing ----------------
+    def initialize_debug_color_spheres(
+        self, drone_colors: list[tuple[float, float, float, float]] | None
+    ) -> None:
+        # Enable drawing debug colored spheres over
+        # drones if drone colors are provided
+        if drone_colors:
+            if len(drone_colors) != self.num_envs:
+                raise ValueError(
+                    "The number of colors in `drone_colors` must be equal to "
+                    "the number of environments."
+                )
+
+            self.drone_colors = drone_colors
+            self.drone_offsets = torch.from_numpy(self.scene.envs_offset).to(
+                device=self.device, dtype=torch.float
+            )
+            self.drone_colors_enabled = True
+
+    def draw_colored_spheres(self) -> None:
+        # Draw color debug spheres over drones for
+        # visual differentiation if enabled
+        self.scene.clear_debug_objects()
+
+        # Calculate drone world positions
+        local_pos = self.drone.get_pos()
+        world_pos = local_pos + self.drone_offsets
+
+        # Draw colored spheres for each drone
+        for i in range(self.num_envs):
+            self.scene.draw_debug_sphere(
+                pos=world_pos[i],
+                radius=0.03,
+                color=self.drone_colors[i],
+            )
 
     # ------------ reward functions----------------
     def _reward_target(self) -> torch.Tensor:

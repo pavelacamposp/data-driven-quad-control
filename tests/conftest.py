@@ -4,7 +4,10 @@ import genesis as gs
 import pytest
 
 from .mocks import (
+    MockDroneTrackingController,
     MockHoverEnv,
+    MockNonlinearDDMPCController,
+    MockRLPolicy,
 )
 
 test_gs_initialized = False
@@ -87,3 +90,18 @@ def dummy_command_cfg() -> dict[str, Any]:
 @pytest.fixture
 def mock_env() -> MockHoverEnv:
     return MockHoverEnv()
+
+
+@pytest.fixture
+def mock_tracking_controller() -> MockDroneTrackingController:
+    return MockDroneTrackingController()
+
+
+@pytest.fixture
+def mock_rl_policy() -> MockRLPolicy:
+    return MockRLPolicy()
+
+
+@pytest.fixture
+def mock_dd_mpc_controller() -> MockNonlinearDDMPCController:
+    return MockNonlinearDDMPCController()

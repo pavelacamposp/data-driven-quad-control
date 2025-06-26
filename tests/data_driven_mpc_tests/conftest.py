@@ -2,20 +2,12 @@ import os
 
 import pytest
 
-from tests.mocks import (
-    MockDroneSystemModel,
-    MockDroneTrackingController,
-)
+from tests.mocks import MockDroneSystemModel
 
 
 @pytest.fixture
 def mock_system_model() -> MockDroneSystemModel:
     return MockDroneSystemModel()
-
-
-@pytest.fixture
-def mock_tracking_controller() -> MockDroneTrackingController:
-    return MockDroneTrackingController()
 
 
 @pytest.fixture
