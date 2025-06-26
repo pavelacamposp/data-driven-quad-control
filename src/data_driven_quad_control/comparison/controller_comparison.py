@@ -187,7 +187,7 @@ def main() -> None:
 
     # Set up visualization
     env_cfg["visualize_target"] = True
-    env_cfg["visualize_camera"] = args.record  # Enable camera for recording
+    env_cfg["visualize_camera"] = record  # Enable camera for recording
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
     # Increase episode length and spatial bounds to allow sufficient
@@ -222,6 +222,10 @@ def main() -> None:
 
     # Reset environment
     obs, _ = env.reset()
+
+    # Start video recording if enabled
+    if record:
+        env.start_recording()
 
     # Load controller configuration data
     controller_comparison_params = load_controller_comparison_params(
@@ -323,8 +327,6 @@ def main() -> None:
             steps_per_setpoint=controller_comparison_params.steps_per_setpoint,
             min_at_target_steps=min_at_target_steps,
             error_threshold=error_threshold,
-            record=record,
-            video_fps=env_cfg["max_visualize_FPS"],
             verbose=verbose,
         )
 
@@ -333,6 +335,22 @@ def main() -> None:
             print(f"Controller comparison failed with error: {str(e)}")
 
     finally:
+        # Stop recording and save video file
+        if record:
+            print("\nSaving video recording to a file")
+
+            output_video_file = "drone_controller_comparison.mp4"
+            env.stop_and_save_recording(
+                save_to_filename=output_video_file,
+                fps=env_cfg["max_visualize_FPS"],
+            )
+
+            if verbose:
+                print(
+                    "Video recording successfully saved to: "
+                    f"{output_video_file}"
+                )
+
         # Save control trajectory data if no exception occurred
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_name = f"control_trajectory_{timestamp}.pkl"
@@ -343,7 +361,8 @@ def main() -> None:
 
             if verbose:
                 print(
-                    f"Controller trajectory data saved to: {control_data_file}"
+                    "\nController trajectory data saved to: "
+                    f"{control_data_file}"
                 )
 
         if verbose:
