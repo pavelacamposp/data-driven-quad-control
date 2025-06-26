@@ -1,6 +1,5 @@
 """
-Initial data collection and state caching for nonlinear data-driven MPC grid
-search
+Collect initial data and cache states for a data-driven MPC grid search.
 
 This module provides functionality for collecting initial input-output
 trajectory data required for initializing data-driven MPC controllers, as well

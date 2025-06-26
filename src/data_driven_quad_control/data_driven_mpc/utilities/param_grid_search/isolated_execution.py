@@ -1,5 +1,5 @@
 """
-Isolated execution of functions within a subprocess
+Execute functions in isolation within a subprocess.
 
 This module provides a wrapper that enables the execution of functions within
 an internal subprocess, ensuring isolation and correct exception propagation.

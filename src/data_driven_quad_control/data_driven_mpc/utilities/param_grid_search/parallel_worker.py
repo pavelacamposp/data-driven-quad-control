@@ -1,5 +1,5 @@
 """
-Nonlinear data-driven MPC parameter grid search - parallel worker
+Worker process for a nonlinear data-driven MPC parameter grid search.
 
 This module implements the parallel worker process used for evaluating
 controller parameter combinations during a nonlinear data-driven MPC parameter

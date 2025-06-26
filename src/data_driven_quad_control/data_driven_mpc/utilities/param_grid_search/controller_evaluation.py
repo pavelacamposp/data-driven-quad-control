@@ -1,5 +1,5 @@
 """
-Nonlinear data-driven MPC controller evaluation for parameter grid search
+Evaluate nonlinear data-driven MPC controllers in a parameter grid search.
 
 This module provides functionality for evaluating nonlinear data-driven MPC
 controllers based on their position tracking performance.

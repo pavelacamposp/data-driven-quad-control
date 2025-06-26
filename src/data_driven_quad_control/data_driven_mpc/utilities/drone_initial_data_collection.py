@@ -1,5 +1,5 @@
 """
-Initial input-output data collection for data-driven MPC controllers
+Collect initial input-output data to initialize data-driven MPC controllers.
 
 This module provides functionality to collect initial input-output data using
 a generated persistently exciting input, which is required for creating

@@ -1,5 +1,5 @@
 """
-Nonlinear data-driven MPC parameter grid search - main process logic
+Run the main process of a nonlinear data-driven MPC parameter grid search.
 
 This module implements the main process responsible for managing parallel
 grid searches over nonlinear data-driven MPC controller parameter combinations
