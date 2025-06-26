@@ -55,8 +55,6 @@ def parallel_controller_simulation(
     steps_per_setpoint: int | None = None,
     min_at_target_steps: int = 10,
     error_threshold: float = 5e-2,
-    record: bool = False,
-    video_fps: int = 60,
     verbose: int = 0,
 ) -> ControlTrajectory:
     """
@@ -235,10 +233,6 @@ def parallel_controller_simulation(
     sim_info = SimInfo(num_targets=num_setpoints)
 
     with torch.no_grad():
-        # Start recording if enabled
-        if record:
-            env.cam.start_recording()
-
         for target_idx, target_pos in enumerate(eval_setpoints):
             if verbose:
                 print(
@@ -320,10 +314,6 @@ def parallel_controller_simulation(
                 # Step environment using batched actions
                 obs, _, _, _ = env.step(action_buffer)
 
-                if record:
-                    # Render camera view if recording
-                    env.cam.render()
-
                 # --- Send observations to workers ---
                 drone_pos = env.get_pos()
                 drone_quat = env.get_quat()
@@ -348,13 +338,6 @@ def parallel_controller_simulation(
 
                 drone_pos_true = env.get_pos(add_noise=False).cpu().numpy()
                 drone_pos_list.append(drone_pos_true)
-
-        # Stop recording and save video file
-        if record:
-            env.cam.stop_recording(
-                save_to_filename="drone_eval.mp4",
-                fps=video_fps,
-            )
 
         # Construct control trajectory data
         control_trajectory_data = construct_trajectory_data(

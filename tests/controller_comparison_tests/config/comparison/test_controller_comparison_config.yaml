@@ -14,3 +14,9 @@ comparison_params:
   eval_setpoints:
     - [0.0, 0.0, 1.5]
   steps_per_setpoint: 1
+
+camera_config:
+  res: [640, 480]
+  pos: [3.0, 0.0, 3.5]
+  lookat: [0.0, 0.0, 1.5]
+  fov: 40

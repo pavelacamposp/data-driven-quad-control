@@ -74,6 +74,14 @@ def main() -> None:
     env_cfg["visualize_camera"] = args.record  # Enable camera for recording
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
+    # Customize camera configuration
+    camera_config = {
+        "res": (640, 480),  # Used for video recording
+        "pos": (3.0, 0.0, 3.0),
+        "lookat": (0.0, 0.0, 1.5),
+        "fov": 40,
+    }
+
     # Create vectorized environment
     env = HoverEnv(
         num_envs=args.num_envs,
@@ -83,6 +91,7 @@ def main() -> None:
         command_cfg=command_cfg,
         show_viewer=True,
         action_type=ENV_ACTION_TYPES_MAP[args.action_type],
+        camera_config=camera_config,
     )
     obs, _ = env.reset()
 
@@ -94,25 +103,23 @@ def main() -> None:
 
     # Evaluate policy in simulation
     max_sim_step = int(
-        env_cfg["episode_length_s"] * env_cfg["max_visualize_FPS"]
+        env_cfg["episode_length_s"]
+        * env_cfg["max_visualize_FPS"]
+        / env_cfg["decimation"]  # Take into account decimation
     )
     with torch.no_grad():
         if args.record:
-            env.cam.start_recording()
+            env.start_recording()
 
-            for _ in range(max_sim_step):
-                actions = policy(obs)
-                obs, _, _, _ = env.step(actions)
-                env.cam.render()
+        for _ in range(max_sim_step):
+            actions = policy(obs)
+            obs, _, _, _ = env.step(actions)
 
-            env.cam.stop_recording(
+        if args.record:
+            env.stop_and_save_recording(
                 save_to_filename="drone_eval.mp4",
                 fps=env_cfg["max_visualize_FPS"],
             )
-        else:
-            for _ in range(max_sim_step):
-                actions = policy(obs)
-                obs, _, _, _ = env.step(actions)
 
 
 if __name__ == "__main__":

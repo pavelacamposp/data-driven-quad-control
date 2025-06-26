@@ -53,6 +53,7 @@ from datetime import datetime
 
 import genesis as gs
 import numpy as np
+import torch
 import torch.multiprocessing as mp
 
 from data_driven_quad_control.controllers.tracking.tracking_controller_config import (  # noqa: E501
@@ -174,6 +175,14 @@ def main() -> None:
 
     gs.init(seed=seed, backend=gs.gpu, logging_level="warning")
 
+    # Load controller comparison configuration parameters
+    env_device = torch.device("cuda")
+    controller_comparison_params = load_controller_comparison_params(
+        config_path=comparison_config_path,
+        env_device=env_device,
+        verbose=verbose,
+    )
+
     # Load environment configuration
     env_cfg, obs_cfg, reward_cfg, command_cfg = get_cfgs()
 
@@ -187,7 +196,7 @@ def main() -> None:
 
     # Set up visualization
     env_cfg["visualize_target"] = True
-    env_cfg["visualize_camera"] = args.record  # Enable camera for recording
+    env_cfg["visualize_camera"] = record  # Enable camera for recording
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
     # Increase episode length and spatial bounds to allow sufficient
@@ -218,17 +227,16 @@ def main() -> None:
         show_viewer=show_viewer,
         action_type=EnvActionType.CTBR_FIXED_YAW,
         drone_colors=drone_colors,
+        device=env_device,
+        camera_config=controller_comparison_params.camera_config,
     )
 
     # Reset environment
     obs, _ = env.reset()
 
-    # Load controller configuration data
-    controller_comparison_params = load_controller_comparison_params(
-        config_path=comparison_config_path,
-        env_device=env.device,
-        verbose=verbose,
-    )
+    # Start video recording if enabled
+    if record:
+        env.start_recording()
 
     # --- Construct controller initialization data ---
     if verbose:
@@ -323,8 +331,6 @@ def main() -> None:
             steps_per_setpoint=controller_comparison_params.steps_per_setpoint,
             min_at_target_steps=min_at_target_steps,
             error_threshold=error_threshold,
-            record=record,
-            video_fps=env_cfg["max_visualize_FPS"],
             verbose=verbose,
         )
 
@@ -333,6 +339,22 @@ def main() -> None:
             print(f"Controller comparison failed with error: {str(e)}")
 
     finally:
+        # Stop recording and save video file
+        if record:
+            print("\nSaving video recording to a file")
+
+            output_video_file = "drone_controller_comparison.mp4"
+            env.stop_and_save_recording(
+                save_to_filename=output_video_file,
+                fps=env_cfg["max_visualize_FPS"],
+            )
+
+            if verbose:
+                print(
+                    "Video recording successfully saved to: "
+                    f"{output_video_file}"
+                )
+
         # Save control trajectory data if no exception occurred
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_name = f"control_trajectory_{timestamp}.pkl"
@@ -343,7 +365,8 @@ def main() -> None:
 
             if verbose:
                 print(
-                    f"Controller trajectory data saved to: {control_data_file}"
+                    "\nController trajectory data saved to: "
+                    f"{control_data_file}"
                 )
 
         if verbose:

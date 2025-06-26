@@ -27,6 +27,12 @@
 #     drones to approach targets when within their vicinity.
 #   - Added a parameter (`drone_colors`) to enable drawing debug colored
 #     spheres over drones for visual differentiation.
+#   - Added methods to start video recording (`start_recording`) and to stop
+#     and save the recording as a video file (`stop_and_save_recording`).
+#   - Integrated camera rendering into simulation steps to simplify video
+#     recording.
+#   - Added a parameter (`camera_config`) to configure camera resolution,
+#     position, look-at target, and FOV.
 
 import math
 from typing import Any
@@ -72,6 +78,7 @@ class HoverEnv:
         auto_target_updates: bool = True,
         action_type: EnvActionType = EnvActionType.CTBR,
         drone_colors: list[tuple[float, float, float, float]] | None = None,
+        camera_config: dict[str, Any] | None = None,
     ):
         self._is_closed = False  # Env closing status
 
@@ -158,14 +165,23 @@ class HoverEnv:
         self.obs_scales = obs_cfg["obs_scales"]
         self.reward_scales = reward_cfg["reward_scales"]
 
+        # Retrieve camera configuration
+        if camera_config is None:
+            camera_config = {}
+
+        self.camera_res = camera_config.get("res", (640, 480))
+        self.camera_pos = camera_config.get("pos", (3.0, 0.0, 3.0))
+        self.camera_lookat = camera_config.get("lookat", (0.0, 0.0, 1.0))
+        self.camera_fov = camera_config.get("fov", 40)
+
         # create scene
         self.scene = gs.Scene(
             sim_options=gs.options.SimOptions(dt=self.dt, substeps=1),
             viewer_options=gs.options.ViewerOptions(
                 max_FPS=env_cfg["max_visualize_FPS"],
-                camera_pos=(3.0, 0.0, 3.0),
-                camera_lookat=(0.0, 0.0, 1.0),
-                camera_fov=40,
+                camera_pos=self.camera_pos,
+                camera_lookat=self.camera_lookat,
+                camera_fov=self.camera_fov,
             ),
             vis_options=gs.options.VisOptions(
                 rendered_envs_idx=list(range(self.num_envs))
@@ -203,10 +219,10 @@ class HoverEnv:
         # add camera
         if self.env_cfg["visualize_camera"]:
             self.cam = self.scene.add_camera(
-                res=(640, 480),
-                pos=(3.5, 0.0, 2.5),
-                lookat=(0, 0, 0.5),
-                fov=30,
+                res=self.camera_res,
+                pos=self.camera_pos,
+                lookat=self.camera_lookat,
+                fov=self.camera_fov,
                 GUI=True,
             )
 
@@ -303,6 +319,11 @@ class HoverEnv:
         # drones if drone colors are provided
         self.drone_colors_enabled = False
         self.initialize_debug_color_spheres(drone_colors)
+
+        # Flag for video recording
+        # Enables camera rendering during simulation steps when True.
+        # Automatically set by `start_recording()`
+        self.render = False
 
     def _resample_commands(self, envs_idx: torch.Tensor) -> None:
         self.commands[envs_idx, 0] = gs_rand_float(
@@ -414,6 +435,10 @@ class HoverEnv:
             # Draw debug spheres for visual differentiation if enabled
             if self.drone_colors_enabled:
                 self.draw_colored_spheres()
+
+            # Render camera view if recording
+            if self.render:
+                self.cam.render()
 
         # update buffers
         self.episode_length_buf += 1
@@ -755,6 +780,30 @@ class HoverEnv:
                 pos=world_pos[i],
                 radius=0.03,
                 color=self.drone_colors[i],
+            )
+
+    # ------------ video recording functions----------------
+    def start_recording(self) -> None:
+        """Start video recording using the environment's camera."""
+        if hasattr(self, "cam"):
+            self.cam.start_recording()
+            self.render = True
+        else:
+            raise RuntimeError(
+                "Cannot start recording: camera is not initialized."
+                "Set `visualize_camera` to True in `env_cfg`."
+            )
+
+    def stop_and_save_recording(
+        self, save_to_filename: str = "output.mp4", fps: int = 60
+    ) -> None:
+        """Stop video recording and save the video to a file."""
+        if hasattr(self, "cam"):
+            self.cam.stop_recording(save_to_filename=save_to_filename, fps=fps)
+        else:
+            raise RuntimeError(
+                "Cannot stop recording: camera is not initialized."
+                "Set `visualize_camera` to True in `env_cfg`."
             )
 
     # ------------ reward functions----------------

@@ -22,6 +22,7 @@ def test_load_controller_comparison_params(
     assert isinstance(controller_comparison_params, ControllerComparisonParams)
 
     # Verify loaded parameters based on known values from the test config file
+    # Verify comparison parameters
     expected_hover_pos = torch.tensor(
         [0.0, 0.0, 1.5], dtype=torch.float, device=device
     )
@@ -38,7 +39,15 @@ def test_load_controller_comparison_params(
         controller_comparison_params.eval_setpoints[0], expected_setpoint
     )
 
+    # Verify RL model path
     assert (
         "test_ctbr_fixed_yaw_model.pt"
         in controller_comparison_params.ppo_model_path
     )
+
+    # Verify video recording parameters
+    assert isinstance(controller_comparison_params.camera_config, dict)
+
+    expected_camera_config_keys = {"res", "pos", "lookat", "fov"}
+    camera_config_keys = set(controller_comparison_params.camera_config.keys())
+    assert camera_config_keys == expected_camera_config_keys
