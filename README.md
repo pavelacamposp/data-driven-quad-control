@@ -1,1 +1,1 @@
-# data_driven_quad_control
+# data-driven-quad-control
