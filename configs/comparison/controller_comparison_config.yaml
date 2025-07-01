@@ -12,7 +12,7 @@ dd_mpc_controller:
 
 # Reinforcement Learning (trained PPO policy) controller model
 rl_ppo_model:
-  model_path: models/demo/ctbr_fixed_yaw_model_1000.pt
+  model_path: models/demo_ctbr_fixed_yaw/model_1500.pt
 
 # Parameters for the controller comparison scenario
 comparison_params:

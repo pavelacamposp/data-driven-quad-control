@@ -6,8 +6,8 @@ a PPO agent in parallel.
 """
 
 import argparse
+import json
 import os
-import pickle
 import shutil
 
 import genesis as gs
@@ -66,7 +66,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
+    print("--- PPO Model Training ---")
+    print("-" * 26)
+
     # Initialize Genesis simulator
+    print("Initializing Genesis simulator")
+
     gs.init(backend=gs.gpu, logging_level="error")
 
     # Retrieve environment and training configuration
@@ -83,14 +88,28 @@ def main() -> None:
         shutil.rmtree(log_dir)
     os.makedirs(log_dir, exist_ok=True)
 
-    with open(f"{log_dir}/cfgs.pkl", "wb") as f:
-        pickle.dump([env_cfg, obs_cfg, reward_cfg, command_cfg, train_cfg], f)
+    cfgs = {
+        "env_cfg": env_cfg,
+        "obs_cfg": obs_cfg,
+        "reward_cfg": reward_cfg,
+        "command_cfg": command_cfg,
+        "train_cfg": train_cfg,
+        "action_type_str": args.action_type,
+    }
+    cfgs_path = f"{log_dir}/cfgs.json"
+
+    print(f"Saving training configuration to {cfgs_path}")
+
+    with open(cfgs_path, "w") as f:
+        json.dump(cfgs, f, indent=2)
 
     # Set up target visualization
     if args.vis:
         env_cfg["visualize_target"] = True
 
     # Create vectorized environment
+    print(f"Creating drone environment with {action_type.name} actions")
+
     env = HoverEnv(
         num_envs=args.num_envs,
         env_cfg=env_cfg,
@@ -101,12 +120,21 @@ def main() -> None:
         action_type=action_type,
     )
 
-    # Create and train model
+    # Create `OnPolicyRunner` model
+    print("\nPPO Policy Training")
+    print("-" * 19)
+    print("Creating model")
+
     runner = OnPolicyRunner(env, train_cfg, log_dir, device=env.device)
+
+    # Start model training
+    print("Starting model training")
 
     runner.learn(
         num_learning_iterations=args.max_iterations, init_at_random_ep_len=True
     )
+
+    print("\nTraining finished successfully.")
 
 
 if __name__ == "__main__":

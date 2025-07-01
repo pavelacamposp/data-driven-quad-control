@@ -1,0 +1,108 @@
+{
+  "env_cfg": {
+    "dt": 0.01,
+    "decimation": 4,
+    "simulate_action_latency": true,
+    "clip_actions": 1.0,
+    "actuator_noise_std": 0.0,
+    "termination_if_roll_greater_than": 180,
+    "termination_if_pitch_greater_than": 180,
+    "termination_if_close_to_ground": 0.1,
+    "termination_if_x_greater_than": 3.0,
+    "termination_if_y_greater_than": 3.0,
+    "termination_if_z_greater_than": 2.0,
+    "termination_if_ang_vel_greater_than": 20,
+    "termination_if_lin_vel_greater_than": 20,
+    "base_init_pos": [
+      0.0,
+      0.0,
+      1.0
+    ],
+    "base_init_quat": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "episode_length_s": 15.0,
+    "at_target_threshold": 0.1,
+    "min_hover_time_s": 0.5,
+    "resampling_time_s": 3.0,
+    "visualize_target": false,
+    "visualize_camera": false,
+    "max_visualize_FPS": 100
+  },
+  "obs_cfg": {
+    "obs_scales": {
+      "rel_pos": 0.3333333333333333,
+      "lin_vel": 0.3333333333333333,
+      "ang_vel": 0.31831015504887655
+    },
+    "obs_noise_std": 0.0
+  },
+  "reward_cfg": {
+    "yaw_lambda": -10.0,
+    "reward_scales": {
+      "target": 10.0,
+      "closeness": 1.5,
+      "hover_time": 0.01,
+      "smooth": -0.01,
+      "yaw": 0.0,
+      "angular": -0.0002,
+      "crash": -10.0
+    }
+  },
+  "command_cfg": {
+    "num_commands": 3,
+    "pos_x_range": [
+      -1.0,
+      1.0
+    ],
+    "pos_y_range": [
+      -1.0,
+      1.0
+    ],
+    "pos_z_range": [
+      1.0,
+      3.0
+    ]
+  },
+  "train_cfg": {
+    "algorithm": {
+      "class_name": "PPO",
+      "clip_param": 0.2,
+      "desired_kl": 0.01,
+      "entropy_coef": 0.004,
+      "gamma": 0.99,
+      "lam": 0.95,
+      "learning_rate": 0.0003,
+      "max_grad_norm": 1.0,
+      "num_learning_epochs": 5,
+      "num_mini_batches": 4,
+      "schedule": "adaptive",
+      "use_clipped_value_loss": true,
+      "value_loss_coef": 1.0
+    },
+    "init_member_classes": {},
+    "policy": {
+      "class_name": "ActorCritic",
+      "activation": "tanh",
+      "actor_hidden_dims": [
+        128,
+        128
+      ],
+      "critic_hidden_dims": [
+        128,
+        128
+      ],
+      "init_noise_std": 1.0
+    },
+    "experiment_name": "ZFINAL",
+    "max_iterations": 1001,
+    "num_steps_per_env": 100,
+    "save_interval": 100,
+    "empirical_normalization": false,
+    "logger": "tensorboard"
+  },
+  "action_type_str": "ctbr_fixed_yaw"
+}
