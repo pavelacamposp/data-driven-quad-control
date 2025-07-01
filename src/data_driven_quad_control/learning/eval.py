@@ -67,7 +67,14 @@ def main() -> None:
     # Load environment and training configuration
     log_dir = f"logs/{args.exp_name}_{args.action_type}"
     with open(f"{log_dir}/cfgs.pkl", "rb") as f:
-        env_cfg, obs_cfg, reward_cfg, command_cfg, train_cfg = pickle.load(f)
+        cfgs = pickle.load(f)
+
+    env_cfg = cfgs["env_cfg"]
+    obs_cfg = cfgs["obs_cfg"]
+    reward_cfg = cfgs["reward_cfg"]
+    command_cfg = cfgs["command_cfg"]
+    train_cfg = cfgs["train_cfg"]
+    action_type_str = cfgs["action_type_str"]
 
     # Set up visualization
     env_cfg["visualize_target"] = True
@@ -90,7 +97,7 @@ def main() -> None:
         reward_cfg=reward_cfg,
         command_cfg=command_cfg,
         show_viewer=True,
-        action_type=ENV_ACTION_TYPES_MAP[args.action_type],
+        action_type=ENV_ACTION_TYPES_MAP[action_type_str],
         camera_config=camera_config,
     )
     obs, _ = env.reset()

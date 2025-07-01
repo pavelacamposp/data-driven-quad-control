@@ -83,8 +83,17 @@ def main() -> None:
         shutil.rmtree(log_dir)
     os.makedirs(log_dir, exist_ok=True)
 
+    cfgs = {
+        "env_cfg": env_cfg,
+        "obs_cfg": obs_cfg,
+        "reward_cfg": reward_cfg,
+        "command_cfg": command_cfg,
+        "train_cfg": train_cfg,
+        "action_type_str": args.action_type,
+    }
+
     with open(f"{log_dir}/cfgs.pkl", "wb") as f:
-        pickle.dump([env_cfg, obs_cfg, reward_cfg, command_cfg, train_cfg], f)
+        pickle.dump(cfgs, f)
 
     # Set up target visualization
     if args.vis:
