@@ -25,23 +25,19 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--exp_name",
+        "--log_dir",
         type=str,
-        default="drone-hovering",
-        help="The experiment name.",
+        required=True,
+        help=(
+            "The path to the experiment directory containing `cfgs.pkl` and "
+            "`model_*.pt` files."
+        ),
     )
     parser.add_argument(
         "--num_envs",
         type=int,
         default=1,
         help="The number of parallel environments (drones) to create.",
-    )
-    parser.add_argument(
-        "--action_type",
-        type=str,
-        choices=list(ENV_ACTION_TYPES_MAP.keys()),
-        default="rpms",
-        help="The environment action type.",
     )
     parser.add_argument(
         "--ckpt",
@@ -65,7 +61,7 @@ def main() -> None:
     gs.init(backend=gs.gpu, logging_level="error")
 
     # Load environment and training configuration
-    log_dir = f"logs/{args.exp_name}_{args.action_type}"
+    log_dir = args.log_dir
     with open(f"{log_dir}/cfgs.pkl", "rb") as f:
         cfgs = pickle.load(f)
 
