@@ -6,8 +6,8 @@ evaluates it in simulation using the `HoverEnv` vectorized environment.
 """
 
 import argparse
+import json
 import os
-import pickle
 
 import genesis as gs
 import torch
@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         required=True,
         help=(
-            "The path to the experiment directory containing `cfgs.pkl` and "
+            "The path to the experiment directory containing `cfgs.json` and "
             "`model_*.pt` files."
         ),
     )
@@ -62,8 +62,8 @@ def main() -> None:
 
     # Load environment and training configuration
     log_dir = args.log_dir
-    with open(f"{log_dir}/cfgs.pkl", "rb") as f:
-        cfgs = pickle.load(f)
+    with open(f"{log_dir}/cfgs.json", "r") as f:
+        cfgs = json.load(f)
 
     env_cfg = cfgs["env_cfg"]
     obs_cfg = cfgs["obs_cfg"]

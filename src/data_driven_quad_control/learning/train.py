@@ -6,8 +6,8 @@ a PPO agent in parallel.
 """
 
 import argparse
+import json
 import os
-import pickle
 import shutil
 
 import genesis as gs
@@ -92,8 +92,8 @@ def main() -> None:
         "action_type_str": args.action_type,
     }
 
-    with open(f"{log_dir}/cfgs.pkl", "wb") as f:
-        pickle.dump(cfgs, f)
+    with open(f"{log_dir}/cfgs.json", "w") as f:
+        json.dump(cfgs, f, indent=2)
 
     # Set up target visualization
     if args.vis:
