@@ -57,12 +57,21 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
+    print("--- Trained PPO Model Evaluation ---")
+    print("-" * 36)
+
     # Initialize Genesis simulator
+    print("Initializing Genesis simulator")
+
     gs.init(backend=gs.gpu, logging_level="error")
 
     # Load environment and training configuration
     log_dir = args.log_dir
-    with open(f"{log_dir}/cfgs.json", "r") as f:
+    cfgs_path = f"{log_dir}/cfgs.json"
+
+    print(f"Loading training configuration from {cfgs_path}")
+
+    with open(cfgs_path, "r") as f:
         cfgs = json.load(f)
 
     env_cfg = cfgs["env_cfg"]
@@ -86,6 +95,10 @@ def main() -> None:
     }
 
     # Create vectorized environment
+    action_type = ENV_ACTION_TYPES_MAP[action_type_str]
+
+    print(f"Creating drone environment with {action_type.name} actions")
+
     env = HoverEnv(
         num_envs=args.num_envs,
         env_cfg=env_cfg,
@@ -93,7 +106,7 @@ def main() -> None:
         reward_cfg=reward_cfg,
         command_cfg=command_cfg,
         show_viewer=True,
-        action_type=ENV_ACTION_TYPES_MAP[action_type_str],
+        action_type=action_type,
         camera_config=camera_config,
     )
     obs, _ = env.reset()
@@ -101,10 +114,16 @@ def main() -> None:
     # Load PPO policy from model checkpoint
     runner = OnPolicyRunner(env, train_cfg, log_dir, device=env.device)
     resume_path = os.path.join(log_dir, f"model_{args.ckpt}.pt")
+
+    print(f"Loading PPO policy from model checkpoint {resume_path}")
+
     runner.load(resume_path)
     policy = runner.get_inference_policy(device=env.device)
 
     # Evaluate policy in simulation
+    print("\nTrained Policy Evaluation")
+    print("-" * 25)
+
     max_sim_step = int(
         env_cfg["episode_length_s"]
         * env_cfg["max_visualize_FPS"]
@@ -112,17 +131,26 @@ def main() -> None:
     )
     with torch.no_grad():
         if args.record:
+            print("Recording: starting video capture")
             env.start_recording()
+
+        print("Evaluating trained policy")
 
         for _ in range(max_sim_step):
             actions = policy(obs)
             obs, _, _, _ = env.step(actions)
 
         if args.record:
+            output_file = "drone_eval.mp4"
+
+            print(f"Recording: Stopping and saving recording to {output_file}")
+
             env.stop_and_save_recording(
-                save_to_filename="drone_eval.mp4",
+                save_to_filename=output_file,
                 fps=env_cfg["max_visualize_FPS"],
             )
+
+    print("\nPolicy evaluation finished.")
 
 
 if __name__ == "__main__":
