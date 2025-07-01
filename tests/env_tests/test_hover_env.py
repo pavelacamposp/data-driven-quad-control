@@ -60,6 +60,49 @@ def test_hover_env_loop(
         assert f"rew_{k}" in env.extras["episode"]
 
 
+@pytest.mark.parametrize("require_stabilization", [True, False])
+def test_env_hovering_at_target(
+    require_stabilization: bool,
+    mock_env: HoverEnv,
+) -> None:
+    # Define test parameters
+    num_envs = 2
+    mock_env.hover_counter = torch.zeros(
+        (num_envs,), device=mock_env.device, dtype=torch.int
+    )
+    mock_env.at_target_threshold = 1.0
+    mock_env.rel_pos = torch.tensor(
+        [
+            [0.0, 0.0, 0.0],  # Drone at target
+            [10.0, 10.0, 10.0],  # Drone far from target
+        ]
+    )
+    mock_env.min_hover_steps = 2 if require_stabilization else 0
+
+    # Test `HoverEnv._hovering_at_target`
+    if require_stabilization:
+        # First call:
+        # Only update the hover counter of drones at target
+        stabilized_at_target = HoverEnv._hovering_at_target(mock_env)
+
+        assert stabilized_at_target.numel() == 0
+        assert mock_env.hover_counter.tolist() == [1, 0]
+
+        # Second call:
+        # Update the hover counter and return the indices of drones that have
+        # been at target for at least `min_hover_steps` (drone idx 0)
+        stabilized_at_target = HoverEnv._hovering_at_target(mock_env)
+
+        assert mock_env.hover_counter.tolist() == [2, 0]
+        assert torch.equal(stabilized_at_target, torch.tensor([0]))
+    else:
+        at_target = HoverEnv._hovering_at_target(mock_env)
+
+        # Verify that drone indices are returned
+        # immediately when they reach the target
+        assert torch.equal(at_target, torch.tensor([0]))
+
+
 @pytest.mark.parametrize("add_obs_noise", [True, False])
 def test_env_compute_observations(
     add_obs_noise: bool, mock_env: HoverEnv
