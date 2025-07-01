@@ -347,20 +347,26 @@ class HoverEnv:
             torch.norm(self.rel_pos, dim=1) < self.at_target_threshold
         )
 
-        # Increment counters of drones that are at target
-        self.hover_counter[at_target_mask] += 1
-        # Reset counters for drones that moved away from the target
-        self.hover_counter[~at_target_mask] = 0
+        if self.min_hover_steps > 0:
+            # Increment counters of drones that are at target
+            self.hover_counter[at_target_mask] += 1
+            # Reset counters for drones that moved away from the target
+            self.hover_counter[~at_target_mask] = 0
 
-        # Get indices of drones stabilized at target
-        # (hovered at target for at least `min_hover_steps` steps)
-        stabilized_at_target = (
-            (self.hover_counter >= self.min_hover_steps)
-            .nonzero(as_tuple=False)
-            .flatten()
-        )
+            # Get indices of drones stabilized at target
+            # (hovered at target for at least `min_hover_steps` steps)
+            stabilized_at_target = (
+                (self.hover_counter >= self.min_hover_steps)
+                .nonzero(as_tuple=False)
+                .flatten()
+            )
 
-        return stabilized_at_target
+            return stabilized_at_target
+        else:
+            # Get indices of drones that reached the target
+            at_target = at_target_mask.nonzero(as_tuple=False).flatten()
+
+            return at_target
 
     def reset(self) -> tuple[torch.Tensor, None]:
         self.reset_buf[:] = True
