@@ -97,8 +97,8 @@
       ],
       "init_noise_std": 1.0
     },
-    "experiment_name": "ZFINAL",
-    "max_iterations": 1001,
+    "experiment_name": "demo_ctbr_fixed_yaw",
+    "max_iterations": 1501,
     "num_steps_per_env": 100,
     "save_interval": 100,
     "empirical_normalization": false,
