@@ -8,7 +8,7 @@ version = "0.1.0"
 authors = [
   { name = "Pável A. Campos-Peña", email = "pcamposp@uni.pe" }
 ]
-description = "Data-driven control for drones in Genesis: data-driven MPC and reinforcement learning"
+description = "Data-driven position control for quadcopters in Genesis: Reinforcement Learning and Data-Driven MPC"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10.0"
 dependencies = [
