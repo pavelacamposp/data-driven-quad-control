@@ -61,7 +61,7 @@ def main() -> None:
     env_cfg, obs_cfg, reward_cfg, command_cfg = get_cfgs()
 
     # Set up visualization
-    env_cfg["visualize_target"] = True
+    env_cfg["visualize_target"] = False
     env_cfg["max_visualize_FPS"] = 100  # Sim visualization FPS
 
     # Create environment

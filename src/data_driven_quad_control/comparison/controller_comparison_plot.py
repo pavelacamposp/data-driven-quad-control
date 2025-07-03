@@ -127,6 +127,7 @@ def main() -> None:
         u_bounds_list=u_bounds_list,
         **plot_params,
         ctrl_dt=ctrl_dt,
+        x_axis_tick_step=2,
     )
 
     # Plot mean +/- std areas if multiple runs are plotted

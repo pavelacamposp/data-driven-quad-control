@@ -31,7 +31,7 @@ line_params:
 # Legend labels for controllers
 controller_labels:
   tracking: "Tracking (PID)"
-  rl: "RL - CTBR Fixed Yaw"
+  rl: "RL (PPO)"
   dd_mpc: "DD-MPC"
 
 # Legend labels for output setpoints

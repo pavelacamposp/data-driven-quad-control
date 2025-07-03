@@ -37,6 +37,7 @@ def plot_trajectory_comparison(
     fontsize: int = 12,
     title: str | None = "Control Comparison",
     ctrl_dt: float | None = None,
+    x_axis_tick_step: int = 1,
 ) -> Figure:
     """
     Plot multiple input-output trajectories with setpoints in a Matplotlib
@@ -83,6 +84,9 @@ def plot_trajectory_comparison(
         ctrl_dt (float | None): The control time step used for each controller
             data (in seconds). If provided, the X-axis ticks will be relabeled
             from discrete time steps to time in seconds.
+        x_axis_tick_step (int): The interval (in time steps) at which X-axis
+            tick labels are displayed. Used when `ctrl_dt` is provided.
+            Defaults to 1.
 
     Returns:
         Figure: The created Matplotlib figure containing the trajectory
@@ -120,7 +124,7 @@ def plot_trajectory_comparison(
     if ctrl_dt:
         T = trajectory_data.control_inputs[0].shape[0]
         relabel_time_axis_ticks(
-            axs, num_steps=T, ctrl_dt=ctrl_dt, label_step=1
+            axs, num_steps=T, ctrl_dt=ctrl_dt, label_step=x_axis_tick_step
         )
 
     return fig
