@@ -78,7 +78,7 @@ Follow these steps to create a virtual environment and install the project:
 3. Create a virtual environment in the project directory:
     - Unix/macOS:
         ```bash
-        python3 -m venv venv
+        python3 -m venv .venv
         ```
     - Windows:
         ```cmd
@@ -87,7 +87,7 @@ Follow these steps to create a virtual environment and install the project:
 4. Activate the virtual environment:
     - Unix/macOS:
         ```bash
-        source venv/bin/activate
+        source .venv/bin/activate
         ```
     - Windows:
         ```cmd
