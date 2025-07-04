@@ -93,8 +93,12 @@ Follow these steps to create a virtual environment and install the project:
         ```cmd
         venv\Scripts\activate
         ```
-5. Install **PyTorch with CUDA support** following the [official instructions](https://pytorch.org/get-started/locally/).
-6. Install the project:
+5. Upgrade pip:
+    ```bash
+    python -m pip install --upgrade pip
+    ```
+6. Install **PyTorch with CUDA support** following the [official instructions](https://pytorch.org/get-started/locally/).
+7. Install the project:
     ```bash
     pip install -e .
     ```
