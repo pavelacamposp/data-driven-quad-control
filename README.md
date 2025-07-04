@@ -64,6 +64,10 @@ The data-driven MPC control system builds on the implementation from [direct-dat
 > git config --global core.longpaths true
 > ```
 
+> [!IMPORTANT]
+> This project was developed and tested on Unix (Ubuntu).  
+**Windows is currently partially supported**: Most features work, but scripts that use PyTorch multiprocessing (Data-Driven MPC Grid Search and Controller Comparison) do not run correctly on Windows.
+
 ## Installation
 Follow these steps to create a virtual environment and install the project:
 
@@ -156,6 +160,9 @@ The nonlinear data-driven MPC (DD-MPC) control system for drone position control
 > The nonlinear data-driven MPC controller implementation is based on [direct-data-driven-mpc](https://github.com/pavelacamposp/direct-data-driven-mpc), which uses Python and CVXPY. This leads to slow control computations for this application due to how CVXPY builds, formulates, and solves the MPC problem. A more efficient data-driven MPC controller will be implemented in the future.
 
 ### DD-MPC Parameter Grid Search
+> [!WARNING]
+> **Windows not yet supported:** This script does not run correctly on Windows due to multiprocessing issues with PyTorch. You can still run the [DD-MPC Controller Evaluation](#dd-mpc-controller-evaluation) script to evaluate DD-MPC controllers individually.
+
 The DD-MPC parameter grid search system is implemented in [`src/data_driven_quad_control/data_driven_mpc/dd_mpc_param_grid_search.py`](src/data_driven_quad_control/data_driven_mpc/dd_mpc_param_grid_search.py). It identifies efficient DD-MPC parameters by spawning multiple controllers in parallel processes to evaluate unique controller parameter combinations from a defined grid. At the end of a grid search, it writes a report file summarizing the grid search results.
 
 To run a parallel grid search with 10 parallel processes using configuration parameters defined in [`configs/data_driven_mpc/dd_mpc_grid_search_params.yaml`](configs/data_driven_mpc/dd_mpc_grid_search_params.yaml), execute the following command:
@@ -178,6 +185,9 @@ python -m src.data_driven_quad_control.data_driven_mpc.dd_mpc_controller_eval --
 *Figure: Control trajectories of tracking (PID), Reinforcement Learning (PPO), and data-driven MPC controllers.*
 
 ### Controller Comparison System
+> [!WARNING]
+> **Windows not yet supported:** This script does not run correctly on Windows due to multiprocessing issues with PyTorch.
+
 The controller comparison system is implemented in [`src/data_driven_quad_control/comparison/controller_comparison.py`](src/data_driven_quad_control/comparison/controller_comparison.py). It compares the following controllers in simulation for drone position control:
 - PID tracking controller (used as a baseline)
 - Reinforcement Learning controller (trained PPO policy)
