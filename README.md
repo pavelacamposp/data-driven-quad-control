@@ -37,6 +37,7 @@ The data-driven MPC control system builds on the implementation from [direct-dat
 - **Data-driven controller comparison:** Parallel evaluation of controllers.
 
 ## Table of Contents
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Collective Thrust and Body Rates (CTBR) Controller](#collective-thrust-and-body-rates-ctbr-controller)
   - [Usage Example](#usage-example)
@@ -53,38 +54,42 @@ The data-driven MPC control system builds on the implementation from [direct-dat
   - [Control Trajectory Plotting](#control-trajectory-plotting)
 - [License](#license)
 
+## Requirements
+- **Python 3.10** or later.
+- **CUDA-capable system** required to run the Genesis simulator.
+
+> [!IMPORTANT]
+> On **Windows**, you may need to enable [long path support](https://pip.pypa.io/warnings/enable-long-paths) to avoid Git installation errors due to path lengths. Alternatively, you can run the following command to enable long path support directly in Git:
+> ```bash
+> git config --global core.longpaths true
+> ```
+
 ## Installation
 Follow these steps to create a virtual environment and install the project:
 
-> [!NOTE]
-> This project was developed and tested on Linux (Ubuntu). To install it on Windows/macOS, please follow the installation instructions from the [Genesis repository](https://github.com/Genesis-Embodied-AI/Genesis).
+1. Clone the repository and navigate to the project directory:
+    ```bash
+    git clone https://github.com/pavelacamposp/data-driven-quad-control.git && cd data-driven-quad-control
+    ```
+2. Create and activate a virtual environment:
+    - Unix/macOS:
+        ```bash
+        python3 -m venv .venv && source .venv/bin/activate
+        ```
+    - Windows:
+        ```cmd
+        python -m venv venv && venv\Scripts\activate
+        ```
+3. Upgrade pip:
+    ```bash
+    python -m pip install --upgrade pip
+    ```
+4. Install **PyTorch with CUDA support** by following the [official instructions](https://pytorch.org/get-started/locally/), or by running the following command:
+    ```bash
+    pip install torch --index-url https://download.pytorch.org/whl/cu128
+    ```
+    **Note:** Replace `cu128` with a CUDA version supported by your NVIDIA driver.
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/pavelacamposp/data-driven-quad-control.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd data-driven-quad-control
-   ```
-3. Create a virtual environment in the project directory:
-    - Unix/macOS:
-        ```bash
-        python3 -m venv venv
-        ```
-    - Windows:
-        ```cmd
-        python -m venv venv
-        ```
-4. Activate the virtual environment:
-    - Unix/macOS:
-        ```bash
-        source venv/bin/activate
-        ```
-    - Windows:
-        ```cmd
-        venv\Scripts\activate
-        ```
 5. Install the project:
     ```bash
     pip install -e .
