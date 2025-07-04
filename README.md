@@ -69,19 +69,16 @@ Follow these steps to create a virtual environment and install the project:
 
 1. Clone the repository and navigate to the project directory:
     ```bash
-    git clone https://github.com/pavelacamposp/data-driven-quad-control.git
-    cd data-driven-quad-control
+    git clone https://github.com/pavelacamposp/data-driven-quad-control.git && cd data-driven-quad-control
     ```
 2. Create and activate a virtual environment:
     - Unix/macOS:
         ```bash
-        python3 -m venv .venv
-        source .venv/bin/activate
+        python3 -m venv .venv && source .venv/bin/activate
         ```
     - Windows:
         ```cmd
-        python -m venv venv
-        venv\Scripts\activate
+        python -m venv venv && venv\Scripts\activate
         ```
 3. Upgrade pip:
     ```bash
