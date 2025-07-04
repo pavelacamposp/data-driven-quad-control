@@ -37,6 +37,7 @@ The data-driven MPC control system builds on the implementation from [direct-dat
 - **Data-driven controller comparison:** Parallel evaluation of controllers.
 
 ## Table of Contents
+- [Requirements](#requirements)
 - [Installation](#installation)
 - [Collective Thrust and Body Rates (CTBR) Controller](#collective-thrust-and-body-rates-ctbr-controller)
   - [Usage Example](#usage-example)
@@ -52,6 +53,16 @@ The data-driven MPC control system builds on the implementation from [direct-dat
   - [Controller Comparison System](#controller-comparison-system)
   - [Control Trajectory Plotting](#control-trajectory-plotting)
 - [License](#license)
+
+## Requirements
+- **Python 3.10** or later.
+- **CUDA-capable system** required to run the Genesis simulator.
+
+> [!IMPORTANT]
+> On **Windows**, you may need to enable [long path support](https://pip.pypa.io/warnings/enable-long-paths) to avoid Git installation errors due to path lengths. Alternatively, you can run the following command to enable long path support directly in Git:
+> ```bash
+> git config --global core.longpaths true
+> ```
 
 ## Installation
 Follow these steps to create a virtual environment and install the project:
