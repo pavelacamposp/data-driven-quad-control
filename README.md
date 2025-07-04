@@ -67,38 +67,33 @@ The data-driven MPC control system builds on the implementation from [direct-dat
 ## Installation
 Follow these steps to create a virtual environment and install the project:
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/pavelacamposp/data-driven-quad-control.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd data-driven-quad-control
-   ```
-3. Create a virtual environment in the project directory:
+1. Clone the repository and navigate to the project directory:
+    ```bash
+    git clone https://github.com/pavelacamposp/data-driven-quad-control.git
+    cd data-driven-quad-control
+    ```
+2. Create and activate a virtual environment:
     - Unix/macOS:
         ```bash
         python3 -m venv .venv
-        ```
-    - Windows:
-        ```cmd
-        python -m venv venv
-        ```
-4. Activate the virtual environment:
-    - Unix/macOS:
-        ```bash
         source .venv/bin/activate
         ```
     - Windows:
         ```cmd
+        python -m venv venv
         venv\Scripts\activate
         ```
-5. Upgrade pip:
+3. Upgrade pip:
     ```bash
     python -m pip install --upgrade pip
     ```
-6. Install **PyTorch with CUDA support** following the [official instructions](https://pytorch.org/get-started/locally/).
-7. Install the project:
+4. Install **PyTorch with CUDA support** by following the [official instructions](https://pytorch.org/get-started/locally/), or by running the following command:
+    ```bash
+    pip install torch --index-url https://download.pytorch.org/whl/cu128
+    ```
+    **Note:** Replace `cu128` with a CUDA version supported by your NVIDIA driver.
+
+5. Install the project:
     ```bash
     pip install -e .
     ```
