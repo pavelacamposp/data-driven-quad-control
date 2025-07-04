@@ -67,9 +67,6 @@ The data-driven MPC control system builds on the implementation from [direct-dat
 ## Installation
 Follow these steps to create a virtual environment and install the project:
 
-> [!NOTE]
-> This project was developed and tested on Linux (Ubuntu). To install it on Windows/macOS, please follow the installation instructions from the [Genesis repository](https://github.com/Genesis-Embodied-AI/Genesis).
-
 1. Clone this repository:
    ```bash
    git clone https://github.com/pavelacamposp/data-driven-quad-control.git
@@ -96,7 +93,8 @@ Follow these steps to create a virtual environment and install the project:
         ```cmd
         venv\Scripts\activate
         ```
-5. Install the project:
+5. Install **PyTorch with CUDA support** following the [official instructions](https://pytorch.org/get-started/locally/).
+6. Install the project:
     ```bash
     pip install -e .
     ```
