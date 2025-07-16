@@ -1,6 +1,0 @@
-git+https://github.com/Genesis-Embodied-AI/Genesis.git@1249131
-numpy
-torch
-rsl-rl-lib==2.3.3
-tensorboard
-git+https://github.com/pavelacamposp/direct-data-driven-mpc.git@94150cc
