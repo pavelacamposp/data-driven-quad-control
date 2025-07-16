@@ -17,7 +17,7 @@ dependencies = [
   "torch",
   "rsl-rl-lib==2.3.3",
   "tensorboard",
-  "direct-data-driven-mpc @ git+https://github.com/pavelacamposp/direct-data-driven-mpc@94150cc",
+  "direct-data-driven-mpc==1.2.2",
 ]
 license = "MIT AND Apache-2.0"
 license-files = ["LICEN[CS]E*"]
